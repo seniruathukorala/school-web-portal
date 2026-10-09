@@ -1,0 +1,493 @@
+/* --- Global Styles & Reset --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans Sinhala', 'Poppins', sans-serif;
+    color: #333333;
+    line-height: 1.6;
+    background-color: #ffffff;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+ul {
+    list-style: none;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.section {
+    padding: 70px 0;
+}
+
+.bg-light {
+    background-color: #f8fafc;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 40px;
+    color: #0f172a;
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background-color: #0284c7;
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-left::after {
+    margin: 10px 0 0;
+}
+
+/* --- Navigation Bar --- */
+.navbar {
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.crest-img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+}
+
+.school-title h1 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.school-title span {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.nav-links {
+    display: flex;
+    gap: 25px;
+}
+
+.nav-links a {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #334155;
+    transition: color 0.2s ease;
+}
+
+.nav-links a:hover {
+    color: #0284c7;
+}
+
+/* --- Hero Section --- */
+.hero {
+    position: relative;
+    height: 75vh;
+    background: url('./assets/hero.jpg') no-repeat center center/cover;
+    background-color: #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #ffffff;
+    background-attachment: fixed;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85));
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    padding: 0 20px;
+}
+
+.hero-content h2 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.hero-content .motto {
+    font-size: 1.3rem;
+    font-style: italic;
+    color: #bae6fd;
+    margin-bottom: 25px;
+}
+
+.btn {
+    display: inline-block;
+    background-color: #0284c7;
+    color: #ffffff;
+    padding: 12px 28px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn:hover {
+    background-color: #0369a1;
+    transform: translateY(-2px);
+}
+
+/* --- Vision & Mission Cards --- */
+.about-text > p {
+    font-size: 1.1rem;
+    text-align: center;
+    max-width: 850px;
+    margin: 0 auto 35px;
+    color: #475569;
+}
+
+.vision-mission {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 5px solid #0284c7;
+    padding: 25px;
+    border-radius: 8px;
+}
+
+.card h3 {
+    color: #0f172a;
+    margin-bottom: 10px;
+}
+
+/* --- Principal Section --- */
+.principal-container {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    flex-wrap: wrap;
+}
+
+.principal-img-box {
+    flex: 1;
+    min-width: 250px;
+    text-align: center;
+}
+
+.principal-img {
+    width: 260px;
+    height: 320px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.principal-text {
+    flex: 2;
+    min-width: 300px;
+}
+
+.principal-text p {
+    font-size: 1.05rem;
+    color: #475569;
+    margin-bottom: 20px;
+    line-height: 1.8;
+}
+
+.principal-name h4 {
+    color: #0f172a;
+    font-size: 1.1rem;
+}
+
+.principal-name span {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+/* --- Notices Grid --- */
+.notices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.notice-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease;
+}
+
+.notice-card:hover {
+    transform: translateY(-4px);
+}
+
+.badge {
+    display: inline-block;
+    background-color: #e0f2fe;
+    color: #0369a1;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+}
+
+.notice-card h3 {
+    font-size: 1.15rem;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.notice-card p {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+/* --- Footer --- */
+footer {
+    background-color: #0f172a;
+    color: #94a3b8;
+    padding-top: 50px;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 40px;
+    padding-bottom: 40px;
+}
+
+.footer-col h3 {
+    color: #ffffff;
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+}
+
+.footer-col ul li {
+    margin-bottom: 10px;
+}
+
+.footer-col ul li a:hover {
+    color: #38bdf8;
+}
+
+.footer-col p {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding: 20px 0;
+    border-top: 1px solid #1e293b;
+    font-size: 0.85rem;
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+    .nav-container {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .nav-links {
+        gap: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .hero-content h2 {
+        font-size: 1.9rem;
+    }
+
+    .principal-container {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .text-left {
+        text-align: center;
+    }
+
+    .text-left::after {
+        margin: 10px auto 0;
+    }
+}
+
+.crest-img{
+    width: 170px;
+    height: 200px;
+}
+/* --- Modern UI Upgrades --- */
+.navbar {
+  backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.hero {
+  background-attachment: fixed; /* Parallax effect eka */
+}
+
+.hero-content h2 {
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  letter-spacing: -0.5px;
+}
+
+.card, .notice-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  border: 1px solid #edf2f7;
+}
+
+/* Mouse eka uda thiyaddi lassanata ussana hover effect eka */
+.card:hover, .notice-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.btn {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+}
+
+.btn:hover {
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
+  transform: translateY(-2px);
+}
+/* --- School Anthem Section --- */
+.anthem-section {
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  text-align: center;
+}
+
+.anthem-card {
+  max-width: 750px;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+}
+
+.anthem-lyrics {
+  font-size: 1.1rem;
+  line-height: 2.2;
+  color: #334155;
+  font-weight: 500;
+  margin-bottom: 30px;
+}
+
+.anthem-audio-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.anthem-audio-box p {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0284c7;
+}
+
+.anthem-audio-box audio {
+  width: 100%;
+  max-width: 400px;
+  outline: none;
+}
+
+/* Lyrics collapse / expand transition */
+.lyrics-wrapper {
+  overflow: hidden;
+  transition: max-height 0.4s ease-in-out;
+  position: relative;
+}
+
+.lyrics-wrapper.collapsed {
+  max-height: 180px; /*muladi lines poddk pennnanna*/
+  
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+
+.lyrics-wrapper.expanded {
+  max-height: 1500px; /* Click karama sampurna lyrics pennanawa */
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+
+/* See More Button styling */
+.see-more-btn {
+  margin-top: 15px;
+  background: transparent;
+  border: 1px solid var(--accent, #aa3bff);
+  color: var(--accent, #aa3bff);
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.see-more-btn:hover {
+  background: var(--accent, #aa3bff);
+  color: #ffffff;
+}
