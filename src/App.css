@@ -491,3 +491,51 @@ footer {
   background: var(--accent, #aa3bff);
   color: #ffffff;
 }
+
+/* Print / Download PDF Rules */
+@media print {
+  /* Navbar, search form, footer, and buttons hide wenawa */
+  nav,
+  header,
+  footer,
+  .no-print,
+  button,
+  form,
+  input,
+  select {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #printable-report {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 15mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /* Screen eke hide wela print eke witharak open wenna */
+  .print-only {
+    display: flex !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    border-bottom: 1px solid #000000 !important;
+    padding: 8px !important;
+  }
+}
