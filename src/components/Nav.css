@@ -1,0 +1,123 @@
+/* Navbar Main Wrapper */
+.navbar {
+  width: 100%;
+  background: #ffffff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Nav Container - Center Alignment */
+.nav-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Logo saha School Title */
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.crest-img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.school-title h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.school-title span {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+/* Nav Links Styling */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: #334155;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 6px 0;
+  position: relative;
+  transition: color 0.25s ease;
+}
+
+/* Link Hover Animation */
+.nav-links li a:hover {
+  color: #2563eb;
+}
+
+.nav-links li a::after {
+  content: '';
+  position: absolute;
+  width: 0%;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: #2563eb;
+  transition: width 0.25s ease;
+  border-radius: 2px;
+}
+
+.nav-links li a:hover::after {
+  width: 100%;
+}
+
+/* Modern Student Portal Button */
+.portal-btn {
+  padding: 9px 20px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+  transition: all 0.25s ease;
+}
+
+.portal-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.38);
+}
+
+.portal-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustment */
+@media (max-width: 990px) {
+  .school-title span {
+    display: none;
+  }
+  .nav-links {
+    gap: 12px;
+  }
+}

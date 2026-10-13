@@ -1,9 +1,11 @@
+import React from 'react';
 import crest from '../assets/logo.jpg';
+import './Nav.css'; // Nav.css eka methanata import karanna
 
 export default function Navbar({ onOpenPortal }) {
   return (
     <header className="navbar">
-      <div className="container nav-container">
+      <div className="nav-container">
         <div className="logo-area">
           <img src={crest} alt="School Crest" className="crest-img" />
           <div className="school-title">
@@ -11,8 +13,9 @@ export default function Navbar({ onOpenPortal }) {
             <span>Taxila Maha Vidyalaya - Horana</span>
           </div>
         </div>
+
         <nav>
-          <ul className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <ul className="nav-links">
             <li><a href="#home">මුල් පිටුව</a></li>
             <li><a href="#about">අප ගැන</a></li>
             <li><a href="#principal">විදුහල්පති පණිවිඩය</a></li>
@@ -20,20 +23,11 @@ export default function Navbar({ onOpenPortal }) {
             <li><a href="#contact">සම්බන්ධ වීමට</a></li>
             <li><a href="#anthem">පාසල් ගීතය</a></li>
             
-            {/* Student Portal Button eka */}
+            {/* Student Portal Button */}
             <li>
-              <button
+              <button 
+                className="portal-btn"
                 onClick={onOpenPortal}
-                style={{
-                  padding: '7px 14px',
-                  background: '#2563eb',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontWeight: '600',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer'
-                }}
               >
                 Student Portal
               </button>

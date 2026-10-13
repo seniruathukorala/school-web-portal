@@ -539,3 +539,345 @@ footer {
     padding: 8px !important;
   }
 }
+/* Hero Section Container */
+.hero {
+  position: relative;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0f172a;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+/* Dark Gradient Overlay (Photo eka mathin watena shadow eka - text eka highlight wenna) */
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.6) 0%,
+    rgba(15, 23, 42, 0.85) 100%
+  );
+  z-index: 1;
+}
+
+/* Hero Content Area */
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 900px;
+  padding: 0 24px;
+  animation: fadeInHero 0.8s ease-out forwards;
+}
+
+/* Hero Main Title */
+.hero-content h2 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.25;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Motto / Subtitle */
+.hero-content .motto {
+  font-size: 1.25rem;
+  color: #cbd5e1;
+  font-weight: 500;
+  margin-bottom: 32px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* "තවත් විස්තර" Call to Action Button */
+.hero-content .btn {
+  display: inline-block;
+  padding: 13px 32px;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 50px;
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.35);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.hero-content .btn:hover {
+  background: linear-gradient(135deg, #0369a1, #075985);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.45);
+}
+
+.hero-content .btn:active {
+  transform: translateY(-1px);
+}
+
+/* Smooth Fade-in Animation */
+@keyframes fadeInHero {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile Screens walata Responsive */
+@media (max-width: 768px) {
+  .hero {
+    min-height: 70vh;
+  }
+
+  .hero-content h2 {
+    font-size: 1.85rem;
+  }
+
+  .hero-content .motto {
+    font-size: 1rem;
+    margin-bottom: 24px;
+  }
+
+  .hero-content .btn {
+    padding: 11px 26px;
+    font-size: 0.9rem;
+  }
+}
+/* About Section Base */
+.section {
+  padding: 80px 20px;
+  background-color: #f8fafc;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Section Title with Accent Line */
+.section-title {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: #2563eb;
+  margin: 12px auto 0;
+  border-radius: 4px;
+}
+
+/* About Grid & Description */
+.about-grid {
+  display: flex;
+  justify-content: center;
+}
+
+.about-text {
+  max-width: 900px;
+  width: 100%;
+}
+
+.about-text > p {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #475569;
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+/* Vision & Mission Cards Grid */
+.vision-mission {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 28px;
+}
+
+/* Individual Card Styling */
+.vision-mission .card {
+  background: #ffffff;
+  padding: 32px 28px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Top Accent Line on Cards */
+.vision-mission .card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #2563eb, #38bdf8);
+}
+
+.vision-mission .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.vision-mission .card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vision-mission .card p {
+  font-size: 0.98rem;
+  line-height: 1.7;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .section {
+    padding: 60px 16px;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+  }
+
+  .about-text > p {
+    font-size: 1rem;
+    margin-bottom: 32px;
+  }
+
+  .vision-mission {
+    grid-template-columns: 1fr;
+  }
+}
+/* Background Light */
+.bg-light {
+  background-color: #f1f5f9;
+}
+
+/* Principal Card Wrapper */
+.principal-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 48px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+
+/* Image Box */
+.principal-img-box {
+  flex-shrink: 0;
+}
+
+.principal-img {
+  width: 260px;
+  height: 330px;
+  object-fit: cover;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Content Area */
+.principal-text {
+  flex: 1;
+}
+
+.principal-header {
+  margin-bottom: 20px;
+}
+
+.principal-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 10px 0;
+  text-align: left;
+}
+
+.title-bar {
+  width: 60px;
+  height: 4px;
+  background: #2563eb;
+  border-radius: 4px;
+}
+
+.principal-message {
+  font-size: 1.05rem;
+  line-height: 1.85;
+  color: #475569;
+  margin-bottom: 24px;
+  font-style: italic;
+  position: relative;
+}
+
+/* Name & Designation */
+.principal-name {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 16px;
+}
+
+.principal-name h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.principal-name span {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Responsive (Mobile/Tablet) */
+@media (max-width: 900px) {
+  .principal-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 32px 20px;
+    gap: 28px;
+  }
+
+  .principal-title {
+    text-align: center;
+  }
+
+  .title-bar {
+    margin: 0 auto;
+  }
+
+  .principal-img {
+    width: 200px;
+    height: 250px;
+  }
+}

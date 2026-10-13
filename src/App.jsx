@@ -152,27 +152,32 @@ export default function App() {
       </section>
 
       {/* Principal's Message */}
-      <section id="principal" className="section bg-light">
-        <div className="container principal-container">
-          <div className="principal-img-box">
-            <img 
-              src={principal?.photo ? urlFor(principal.photo).width(500).url() : principalImg} 
-              alt={principal?.name || "Principal"} 
-              className="principal-img" 
-            />
-          </div>
-          <div className="principal-text">
-            <h2 className="section-title text-left">විදුහල්පතිතුමාගේ පණිවිඩය</h2>
-            <p style={{ whiteSpace: 'pre-line' }}>
-              {principal?.message || "පණිවිඩය පැටවෙමින් පවතී..."}
-            </p>
-            <div className="principal-name">
-              <h4>{principal?.name || "විදුහල්පතිතුමා"}</h4>
-              <span>{principal?.title || "විදුහල්පති, තක්ෂිලා මහා විද්‍යාලය-හොරණ"}</span>
-            </div>
-          </div>
+<section id="principal" className="section bg-light">
+  <div className="container">
+    <div className="principal-card">
+      <div className="principal-img-box">
+        <img 
+          src={principal?.photo ? urlFor(principal.photo).width(500).url() : principalImg} 
+          alt={principal?.name || "Principal"} 
+          className="principal-img" 
+        />
+      </div>
+      <div className="principal-text">
+        <div className="principal-header">
+          <h2 className="principal-title">විදුහල්පති පණිවිඩය</h2>
+          <div className="title-bar"></div>
         </div>
-      </section>
+        <p className="principal-message" style={{ whiteSpace: 'pre-line' }}>
+          {principal?.message || "පණිවිඩය පැටවෙමින් පවතී..."}
+        </p>
+        <div className="principal-name">
+          <h4>{principal?.name || "විදුහල්පතිතුමිය"}</h4>
+          <span>{principal?.title || "විදුහල්පති, තක්ෂිලා මහා විද්‍යාලය-හොරණ"}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* School Anthem Section */}
       <section id="anthem" className="section anthem-section">
