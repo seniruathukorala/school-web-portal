@@ -180,7 +180,7 @@ export default function ResultsChecker() {
           {/* Printable Report Card Sheet */}
           <div id="printable-report" style={{ padding: '24px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
             <div style={{ textAlign: 'center', borderBottom: '2px solid #cbd5e1', paddingBottom: '12px', marginBottom: '16px' }}>
-              <h2 style={{ margin: '0 0 6px 0', fontSize: '1.4rem', color: '#0f172a' }}>School Name</h2>
+              <h2 style={{ margin: '0 0 6px 0', fontSize: '1.4rem', color: '#0f172a' }}>Taxila Maha Vidyalaya - Horana</h2>
               <h3 style={{ margin: 0, fontSize: '1rem', color: '#475569' }}>Student Progress Report - {selectedGrade} ({selectedTerm})</h3>
             </div>
 
