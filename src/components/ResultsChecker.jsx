@@ -9,6 +9,7 @@ export default function ResultsChecker() {
   const [selectedTerm, setSelectedTerm] = useState('Term 1');
   const [loading, setLoading] = useState(false);
   const [studentResult, setStudentResult] = useState(null);
+  const [summaryStats, setSummaryStats] = useState({ total: 0, average: 0, rank: '-' });
   const [error, setError] = useState('');
 
   // Browser print window eka open karana function eka
@@ -49,6 +50,13 @@ export default function ResultsChecker() {
       const worksheet = workbook.Sheets[firstSheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
+      // Meta keys list to ignore when calculating subject marks
+      const ignoredKeys = [
+        'studentname', 'name', 'indexno', 'index', 'admissionno', 
+        'grade', 'term', 'section', 'class', 'classsection', 'dob', 
+        'date of birth', 'birthday', '__rownum__', 'total', 'average', 'rank', 'place'
+      ];
+
       // 3. Match both Index Number AND Date of Birth (DOB)
       const student = jsonData.find((row) => {
         const fileIndex = String(row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index || '').trim().toLowerCase();
@@ -62,6 +70,46 @@ export default function ResultsChecker() {
         // Exclude internal DOB field from display
         const { DOB, 'Date of Birth': d1, Birthday: d2, ...displayMarks } = student;
         setStudentResult(displayMarks);
+
+        // Calculate Rank across the sheet
+        const studentTotals = jsonData.map((row) => {
+          const rIndex = String(row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index || '').trim().toLowerCase();
+          let rowTot = 0;
+          Object.entries(row).forEach(([k, v]) => {
+            if (!ignoredKeys.includes(k.toLowerCase().trim())) {
+              const num = Number(v);
+              if (!isNaN(num)) rowTot += num;
+            }
+          });
+          return { index: rIndex, total: rowTot };
+        });
+
+        // Sort descending to find ranks
+        studentTotals.sort((a, b) => b.total - a.total);
+        const currentIndex = indexNo.trim().toLowerCase();
+        const place = studentTotals.findIndex(item => item.index === currentIndex) + 1;
+
+        // Current student's subjects, total & average
+        let curTotal = 0;
+        let subjectCount = 0;
+        Object.entries(displayMarks).forEach(([k, v]) => {
+          if (!ignoredKeys.includes(k.toLowerCase().trim())) {
+            const num = Number(v);
+            if (!isNaN(num)) {
+              curTotal += num;
+              subjectCount++;
+            }
+          }
+        });
+
+        const curAverage = subjectCount > 0 ? (curTotal / subjectCount).toFixed(1) : 0;
+
+        setSummaryStats({
+          total: curTotal,
+          average: curAverage,
+          rank: place > 0 ? `#${place}` : '-'
+        });
+
       } else {
         setError('Invalid Index Number or Date of Birth. Please check and try again.');
       }
@@ -73,9 +121,24 @@ export default function ResultsChecker() {
     }
   };
 
+  const ignoredDisplayKeys = [
+    'studentname', 'name', 'indexno', 'index', 'admissionno', 
+    'grade', 'term', 'section', 'class', 'classsection', '__rownum__'
+  ];
+
   return (
-    <div style={{ maxWidth: '650px', margin: '30px auto', padding: '30px', borderRadius: '16px', background: '#ffffff', boxShadow: '0 10px 25px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
+    <div style={{ maxWidth: '650px', margin: '30px auto', padding: '30px', borderRadius: '16px', background: '#ffffff', boxShadow: '0 10px 25px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0', fontFamily: 'Segoe UI, Roboto, sans-serif' }}>
       
+      {/* Print Specific CSS */}
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          .print-only { display: flex !important; }
+          body { background: #fff !important; }
+          #printable-report { border: none !important; padding: 0 !important; }
+        }
+      `}</style>
+
       {/* Search Section (Print wena welawata hide wenawa) */}
       <div className="no-print">
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -156,7 +219,7 @@ export default function ResultsChecker() {
       {studentResult && (
         <div style={{ marginTop: '24px' }}>
           
-          {/* Print Button (Print karaddi hide wenawa) */}
+          {/* Print Button */}
           <div className="no-print" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
             <button
               onClick={handlePrint}
@@ -189,9 +252,9 @@ export default function ResultsChecker() {
                 <p style={{ margin: '4px 0', fontSize: '0.9rem', color: '#334155' }}>
                   <strong>Index No:</strong> {indexNo.toUpperCase()}
                 </p>
-                {studentResult.StudentName && (
+                {(studentResult.StudentName || studentResult.Name) && (
                   <p style={{ margin: '4px 0', fontSize: '0.9rem', color: '#334155' }}>
-                    <strong>Name:</strong> {studentResult.StudentName}
+                    <strong>Name:</strong> {studentResult.StudentName || studentResult.Name}
                   </p>
                 )}
               </div>
@@ -200,7 +263,7 @@ export default function ResultsChecker() {
               </span>
             </div>
 
-            {/* Dynamic Subjects Table (Vishayan gaana ona tharam wadi unath auto adjust wenawa) */}
+            {/* Dynamic Subjects Table */}
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid #cbd5e1', textAlign: 'left', background: '#f1f5f9' }}>
@@ -210,7 +273,7 @@ export default function ResultsChecker() {
               </thead>
               <tbody>
                 {Object.entries(studentResult)
-                  .filter(([key]) => !['StudentName', 'IndexNo', 'Index', 'AdmissionNo', 'Grade', 'Term', '__rowNum__'].includes(key))
+                  .filter(([key]) => !ignoredDisplayKeys.includes(key.toLowerCase().trim()))
                   .map(([key, value]) => (
                     <tr key={key} style={{ borderBottom: '1px solid #e2e8f0' }}>
                       <td style={{ padding: '10px 8px', fontWeight: '600', color: '#475569', fontSize: '0.9rem' }}>{key}</td>
@@ -219,6 +282,64 @@ export default function ResultsChecker() {
                   ))}
               </tbody>
             </table>
+
+            {/* --- Summary Cards: Total, Average, Place --- */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '12px',
+              marginTop: '20px',
+              paddingTop: '16px',
+              borderTop: '2px dashed #cbd5e1'
+            }}>
+              {/* Total Card */}
+              <div style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '10px',
+                padding: '12px 8px',
+                textAlign: 'center',
+                border: '1px solid #e2e8f0'
+              }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b' }}>
+                  TOTAL MARKS
+                </span>
+                <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#0f172a', marginTop: '2px' }}>
+                  {summaryStats.total}
+                </div>
+              </div>
+
+              {/* Average Card */}
+              <div style={{
+                backgroundColor: '#eff6ff',
+                borderRadius: '10px',
+                padding: '12px 8px',
+                textAlign: 'center',
+                border: '1px solid #bfdbfe'
+              }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#2563eb' }}>
+                  AVERAGE
+                </span>
+                <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#1d4ed8', marginTop: '2px' }}>
+                  {summaryStats.average}%
+                </div>
+              </div>
+
+              {/* Place / Rank Card */}
+              <div style={{
+                backgroundColor: '#fefce8',
+                borderRadius: '10px',
+                padding: '12px 8px',
+                textAlign: 'center',
+                border: '1px solid #fef08a'
+              }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ca8a04' }}>
+                  CLASS RANK
+                </span>
+                <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#a16207', marginTop: '2px' }}>
+                  {summaryStats.rank}
+                </div>
+              </div>
+            </div>
 
             {/* Signatures (Print wena PDF eke yatin witharak penenne) */}
             <div className="print-only" style={{ display: 'none', justifyContent: 'space-between', marginTop: '50px', paddingTop: '20px' }}>
