@@ -90,10 +90,17 @@ const TeacherUploadPortal = () => {
         contentType: selectedFile.type,
       });
 
-      // 2. Create the resultSheet document in Sanity
+      // 2. Generate Deterministic Unique ID (e.g. "result-2026-term1-grade10-a")
+      const cleanGrade = grade.toLowerCase().replace(/\s+/g, '');
+      const cleanTerm = term.toLowerCase().replace(/\s+/g, '');
+      const cleanSection = classSection.toLowerCase().trim();
+      const uniqueDocId = `result-${year}-${cleanTerm}-${cleanGrade}-${cleanSection}`;
+
       const documentTitle = `${year} ${term} - ${grade}-${classSection} Results`;
 
-      await client.create({
+      // 3. createOrReplace: ekama class & term ekata kalin file ekak thibboth eka overwrite (update) wenawa
+      await client.createOrReplace({
+        _id: uniqueDocId,
         _type: 'resultSheet',
         title: documentTitle,
         year: year,
@@ -111,7 +118,7 @@ const TeacherUploadPortal = () => {
 
       setUploadStatus({
         type: 'success',
-        msg: `සාර්ථකව Upload විය: ${documentTitle} ✅`,
+        msg: `සාර්ථකව යාවත්කාලීන / Upload විය: ${documentTitle} ✅`,
       });
       setSelectedFile(null);
       setParsedData([]);
