@@ -16,10 +16,10 @@ const TeacherUploadPortal = () => {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [parsedData, setParsedData] = useState([]);
+  const [analyticsData, setAnalyticsData] = useState({});
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState(null);
 
-  // Common styling for dropdowns to fix visibility issues
   const inputControlStyle = {
     width: '100%',
     padding: '10px 14px',
@@ -50,6 +50,61 @@ const TeacherUploadPortal = () => {
     }
   };
 
+  // Helper function: Calculate 40 below/above analytics from Excel rows
+  const generateAnalytics = (rows) => {
+    if (!rows || rows.length === 0) return {};
+
+    const ignoredKeys = [
+      'studentname', 'name', 'indexno', 'index', 'admissionno', 
+      'grade', 'term', 'section', 'class', 'classsection', 'dob', 
+      'date of birth', 'birthday', '__rownum__', 'total', 'average', 'rank', 'place'
+    ];
+
+    const subjectKeys = Object.keys(rows[0]).filter(
+      (key) => !ignoredKeys.includes(key.toLowerCase().trim())
+    );
+
+    const stats = {};
+
+    subjectKeys.forEach((subj) => {
+      let below40 = 0;
+      let above40 = 0;
+      const validMarks = [];
+
+      rows.forEach((row) => {
+        const val = row[subj];
+        if (val !== undefined && val !== null && String(val).trim() !== '') {
+          const cleanStr = String(val).trim().toLowerCase();
+          if (cleanStr === 'ab') {
+            below40++; // Absent nam 40ta adu gannata count karanawa
+            validMarks.push(0);
+          } else {
+            const num = Number(cleanStr);
+            if (!isNaN(num)) {
+              if (num < 40) below40++;
+              else above40++;
+              validMarks.push(num);
+            }
+          }
+        }
+      });
+
+      const totalCount = below40 + above40;
+      if (totalCount > 0) {
+        stats[subj] = {
+          below40,
+          above40,
+          below40Percent: ((below40 / totalCount) * 100).toFixed(2),
+          above40Percent: ((above40 / totalCount) * 100).toFixed(2),
+          max: validMarks.length > 0 ? Math.max(...validMarks).toFixed(2) : '0.00',
+          min: validMarks.length > 0 ? Math.min(...validMarks).toFixed(2) : '0.00',
+        };
+      }
+    });
+
+    return stats;
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -57,7 +112,6 @@ const TeacherUploadPortal = () => {
     setSelectedFile(file);
     setUploadStatus(null);
 
-    // Read preview from Excel using xlsx
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
@@ -67,6 +121,10 @@ const TeacherUploadPortal = () => {
         const sheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(sheet);
         setParsedData(jsonData);
+
+        // Auto calculate class analytics
+        const stats = generateAnalytics(jsonData);
+        setAnalyticsData(stats);
       } catch (err) {
         console.error('File parsing error:', err);
       }
@@ -84,21 +142,25 @@ const TeacherUploadPortal = () => {
     setUploadStatus(null);
 
     try {
+      // FIX 1: Provide safe fallback content type if browser sets empty
+      const safeContentType = selectedFile.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
       // 1. Upload Excel file to Sanity Assets
       const fileAsset = await client.assets.upload('file', selectedFile, {
         filename: selectedFile.name,
-        contentType: selectedFile.type,
+        contentType: safeContentType,
       });
 
-      // 2. Generate Deterministic Unique ID (e.g. "result-2026-term1-grade10-a")
+      // 2. Generate Deterministic Unique ID
       const cleanGrade = grade.toLowerCase().replace(/\s+/g, '');
       const cleanTerm = term.toLowerCase().replace(/\s+/g, '');
       const cleanSection = classSection.toLowerCase().trim();
       const uniqueDocId = `result-${year}-${cleanTerm}-${cleanGrade}-${cleanSection}`;
 
-      const documentTitle = `${year} ${term} - ${grade}-${classSection} Results`;
+      // FIX 2: One-line title without unexpected break
+      const documentTitle = `${year} ${term} ${grade}-${classSection} Results`;
 
-      // 3. createOrReplace: ekama class & term ekata kalin file ekak thibboth eka overwrite (update) wenawa
+      // 3. createOrReplace
       await client.createOrReplace({
         _id: uniqueDocId,
         _type: 'resultSheet',
@@ -122,11 +184,12 @@ const TeacherUploadPortal = () => {
       });
       setSelectedFile(null);
       setParsedData([]);
+      setAnalyticsData({});
     } catch (error) {
-      console.error('Upload failed:', error);
+      console.error('Upload failed details:', error);
       setUploadStatus({
         type: 'error',
-        msg: 'Upload failed! කරුණාකර Sanity Write Token එක පරීක්ෂා කරන්න.',
+        msg: `Upload failed: ${error.message || 'කරුණාකර Sanity Write Token සහ Network check කරන්න.'}`,
       });
     } finally {
       setIsUploading(false);
@@ -239,7 +302,7 @@ const TeacherUploadPortal = () => {
   // --- VIEW 2: Teacher Upload Dashboard ---
   return (
     <div style={{
-      maxWidth: '850px',
+      maxWidth: '900px',
       margin: '0 auto',
       backgroundColor: '#ffffff',
       borderRadius: '16px',
@@ -311,14 +374,9 @@ const TeacherUploadPortal = () => {
             onChange={(e) => setGrade(e.target.value)}
             style={inputControlStyle}
           >
-            <option value="Grade 6" style={optionStyle}>Grade 6</option>
-            <option value="Grade 7" style={optionStyle}>Grade 7</option>
-            <option value="Grade 8" style={optionStyle}>Grade 8</option>
-            <option value="Grade 9" style={optionStyle}>Grade 9</option>
-            <option value="Grade 10" style={optionStyle}>Grade 10</option>
-            <option value="Grade 11" style={optionStyle}>Grade 11</option>
-            <option value="Grade 12" style={optionStyle}>Grade 12</option>
-            <option value="Grade 13" style={optionStyle}>Grade 13</option>
+            {['Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12', 'Grade 13'].map((g) => (
+              <option key={g} value={g} style={optionStyle}>{g}</option>
+            ))}
           </select>
         </div>
 
@@ -332,13 +390,9 @@ const TeacherUploadPortal = () => {
             onChange={(e) => setClassSection(e.target.value)}
             style={inputControlStyle}
           >
-            <option value="A" style={optionStyle}>Section A</option>
-            <option value="B" style={optionStyle}>Section B</option>
-            <option value="C" style={optionStyle}>Section C</option>
-            <option value="D" style={optionStyle}>Section D</option>
-            <option value="E" style={optionStyle}>Section E</option>
-            <option value="F" style={optionStyle}>Section F</option>
-            <option value="G" style={optionStyle}>Section G</option>
+            {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((sec) => (
+              <option key={sec} value={sec} style={optionStyle}>Section {sec}</option>
+            ))}
           </select>
         </div>
 
@@ -389,7 +443,7 @@ const TeacherUploadPortal = () => {
         </label>
       </div>
 
-      {/* Preview Table */}
+      {/* Preview Table & Analytics */}
       {parsedData.length > 0 && (
         <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', backgroundColor: '#f8fafc', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
@@ -415,6 +469,7 @@ const TeacherUploadPortal = () => {
             </button>
           </div>
 
+          {/* Student Marks Preview */}
           <div style={{ maxHeight: '200px', overflowY: 'auto', marginTop: '12px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', backgroundColor: '#fff', color: '#0f172a' }}>
               <thead>
@@ -435,6 +490,65 @@ const TeacherUploadPortal = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Subject Performance Analytics (40 Below/Above Summary) */}
+          {Object.keys(analyticsData).length > 0 && (
+            <div style={{ marginTop: '20px' }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: '700', color: '#1e293b', display: 'block', marginBottom: '8px' }}>
+                📊 විෂය අනුව ලකුණු විශ්ලේෂණය (Subject Analysis Summary)
+              </span>
+              <div style={{ overflowX: 'auto', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#ffffff' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'center' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                      <th style={{ padding: '10px', textAlign: 'left', fontWeight: '700', color: '#1e293b' }}>විෂය / නිර්ණායක</th>
+                      {Object.keys(analyticsData).map((subj) => (
+                        <th key={subj} style={{ padding: '10px', color: '#1e293b', fontWeight: '700' }}>{subj}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', color: '#dc2626' }}>40ට අඩු</td>
+                      {Object.values(analyticsData).map((d, i) => (
+                        <td key={i} style={{ padding: '8px 10px' }}>{d.below40}</td>
+                      ))}
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', color: '#16a34a' }}>40ට වැඩි</td>
+                      {Object.values(analyticsData).map((d, i) => (
+                        <td key={i} style={{ padding: '8px 10px' }}>{d.above40}</td>
+                      ))}
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: '#fef2f2' }}>
+                      <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', color: '#dc2626' }}>40ට අඩු %</td>
+                      {Object.values(analyticsData).map((d, i) => (
+                        <td key={i} style={{ padding: '8px 10px', fontWeight: '600' }}>{d.below40Percent}%</td>
+                      ))}
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: '#f0fdf4' }}>
+                      <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', color: '#16a34a' }}>40ට වැඩි %</td>
+                      {Object.values(analyticsData).map((d, i) => (
+                        <td key={i} style={{ padding: '8px 10px', fontWeight: '600' }}>{d.above40Percent}%</td>
+                      ))}
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', color: '#1e293b' }}>උපරිම ලකුණු</td>
+                      {Object.values(analyticsData).map((d, i) => (
+                        <td key={i} style={{ padding: '8px 10px', fontWeight: '600' }}>{d.max}</td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', color: '#1e293b' }}>අවම ලකුණු</td>
+                      {Object.values(analyticsData).map((d, i) => (
+                        <td key={i} style={{ padding: '8px 10px', fontWeight: '600' }}>{d.min}</td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
