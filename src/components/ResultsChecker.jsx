@@ -50,7 +50,7 @@ export default function ResultsChecker() {
       const worksheet = workbook.Sheets[firstSheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      // Meta keys list to ignore when calculating subject marks
+      // Meta keys list to ignore when identifying subject columns
       const ignoredKeys = [
         'studentname', 'name', 'indexno', 'index', 'admissionno', 
         'grade', 'term', 'section', 'class', 'classsection', 'dob', 
@@ -71,38 +71,47 @@ export default function ResultsChecker() {
         const { DOB, 'Date of Birth': d1, Birthday: d2, ...displayMarks } = student;
         setStudentResult(displayMarks);
 
-        // Calculate Rank across the sheet
+        // Calculate Rank across the entire sheet (handling 'Ab' as 0)
         const studentTotals = jsonData.map((row) => {
           const rIndex = String(row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index || '').trim().toLowerCase();
           let rowTot = 0;
           Object.entries(row).forEach(([k, v]) => {
             if (!ignoredKeys.includes(k.toLowerCase().trim())) {
-              const num = Number(v);
-              if (!isNaN(num)) rowTot += num;
+              const valStr = String(v).trim().toLowerCase();
+              if (valStr !== 'ab') {
+                const num = Number(valStr);
+                if (!isNaN(num)) rowTot += num;
+              }
             }
           });
           return { index: rIndex, total: rowTot };
         });
 
-        // Sort descending to find ranks
+        // Sort descending to find rank
         studentTotals.sort((a, b) => b.total - a.total);
         const currentIndex = indexNo.trim().toLowerCase();
         const place = studentTotals.findIndex(item => item.index === currentIndex) + 1;
 
-        // Current student's subjects, total & average
+        // Current student's subjects list
+        const subjectEntries = Object.entries(displayMarks).filter(
+          ([k]) => !ignoredKeys.includes(k.toLowerCase().trim())
+        );
+
         let curTotal = 0;
-        let subjectCount = 0;
-        Object.entries(displayMarks).forEach(([k, v]) => {
-          if (!ignoredKeys.includes(k.toLowerCase().trim())) {
-            const num = Number(v);
+        const totalSubjectsCount = subjectEntries.length; // Muluma vishayan gaana (Ab sahitha siyalla)
+
+        subjectEntries.forEach(([_, v]) => {
+          const valStr = String(v).trim().toLowerCase();
+          if (valStr !== 'ab') {
+            const num = Number(valStr);
             if (!isNaN(num)) {
               curTotal += num;
-              subjectCount++;
             }
           }
         });
 
-        const curAverage = subjectCount > 0 ? (curTotal / subjectCount).toFixed(1) : 0;
+        // Muluma vishayan gaanen bedala average hadanawa (Ab thibbath total count eken bedanawa)
+        const curAverage = totalSubjectsCount > 0 ? (curTotal / totalSubjectsCount).toFixed(1) : 0;
 
         setSummaryStats({
           total: curTotal,
