@@ -509,19 +509,20 @@ const TeacherUploadPortal = () => {
                 </div>
               </div>
 
-              {/* Main Student Table */}
-              <div style={{ overflowX: 'auto', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
+              {/* Master Table: Students + Integrated Analytics at the Bottom */}
+              <div style={{ overflowX: 'auto', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#ffffff' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'center' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
-                      <th style={{ padding: '10px 8px', border: '1px solid #e2e8f0', color: '#1e293b' }}>ඇතුළත් අංකය</th>
-                      <th style={{ padding: '10px 8px', border: '1px solid #e2e8f0', textAlign: 'left', minWidth: '140px', color: '#1e293b' }}>නම</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b', width: '90px' }}>ඇතුළත් අංකය</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', textAlign: 'left', minWidth: '150px', color: '#1e293b' }}>නම</th>
                       {reportSubjectColumns.map((col) => (
-                        <th key={col} style={{ padding: '10px 8px', border: '1px solid #e2e8f0', color: '#1e293b' }}>{col}</th>
+                        <th key={col} style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b' }}>{col}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
+                    {/* Student Rows */}
                     {filteredReportRows.map((row, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
                         <td style={{ padding: '8px 6px', border: '1px solid #e2e8f0', fontWeight: '700' }}>
@@ -537,55 +538,91 @@ const TeacherUploadPortal = () => {
                         ))}
                       </tr>
                     ))}
+
+                    {/* Integrated Analytics Rows (Cleanly Aligned with colSpan={2}) */}
+                    {Object.keys(reportAnalytics).length > 0 && (
+                      <>
+                        {/* Divider Bar */}
+                        <tr style={{ height: '14px', backgroundColor: '#f1f5f9' }}>
+                          <td colSpan={2 + reportSubjectColumns.length} style={{ border: '1px solid #cbd5e1', padding: 0 }}></td>
+                        </tr>
+
+                        {/* 40ට අඩු */}
+                        <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
+                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#dc2626' }}>
+                            40ට අඩු
+                          </td>
+                          {reportSubjectColumns.map((c) => (
+                            <td key={c} style={{ padding: '8px 6px', border: '1px solid #cbd5e1' }}>
+                              {reportAnalytics[c]?.below40 ?? 0}
+                            </td>
+                          ))}
+                        </tr>
+
+                        {/* 40ට වැඩි */}
+                        <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
+                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#16a34a' }}>
+                            40ට වැඩි
+                          </td>
+                          {reportSubjectColumns.map((c) => (
+                            <td key={c} style={{ padding: '8px 6px', border: '1px solid #cbd5e1' }}>
+                              {reportAnalytics[c]?.above40 ?? 0}
+                            </td>
+                          ))}
+                        </tr>
+
+                        {/* 40ට අඩු % */}
+                        <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#fef2f2' }}>
+                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#dc2626' }}>
+                            40ට අඩු %
+                          </td>
+                          {reportSubjectColumns.map((c) => (
+                            <td key={c} style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '600' }}>
+                              {reportAnalytics[c]?.below40Percent ?? '0.00'}%
+                            </td>
+                          ))}
+                        </tr>
+
+                        {/* 40ට වැඩි % */}
+                        <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#f0fdf4' }}>
+                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#16a34a' }}>
+                            40ට වැඩි %
+                          </td>
+                          {reportSubjectColumns.map((c) => (
+                            <td key={c} style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '600' }}>
+                              {reportAnalytics[c]?.above40Percent ?? '0.00'}%
+                            </td>
+                          ))}
+                        </tr>
+
+                        {/* උපරිම ලකුණු */}
+                        <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
+                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#1e293b' }}>
+                            උපරිම ලකුණු
+                          </td>
+                          {reportSubjectColumns.map((c) => (
+                            <td key={c} style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '600' }}>
+                              {reportAnalytics[c]?.max ?? '0.00'}
+                            </td>
+                          ))}
+                        </tr>
+
+                        {/* අවම ලකුණු */}
+                        <tr>
+                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#1e293b' }}>
+                            අවම ලකුණු
+                          </td>
+                          {reportSubjectColumns.map((c) => (
+                            <td key={c} style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '600' }}>
+                              {reportAnalytics[c]?.min ?? '0.00'}
+                            </td>
+                          ))}
+                        </tr>
+                      </>
+                    )}
                   </tbody>
                 </table>
               </div>
-
-              {/* Bottom Subject Analysis Table */}
-              {Object.keys(reportAnalytics).length > 0 && (
-                <div style={{ marginTop: '24px', overflowX: 'auto', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'center' }}>
-                    <tbody>
-                      <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                        <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', width: '140px' }}>40ට අඩු</td>
-                        {reportSubjectColumns.map((c) => (
-                          <td key={c} style={{ padding: '8px 6px' }}>{reportAnalytics[c]?.below40 ?? 0}</td>
-                        ))}
-                      </tr>
-                      <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                        <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>40ට වැඩි</td>
-                        {reportSubjectColumns.map((c) => (
-                          <td key={c} style={{ padding: '8px 6px' }}>{reportAnalytics[c]?.above40 ?? 0}</td>
-                        ))}
-                      </tr>
-                      <tr style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: '#fef2f2' }}>
-                        <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', color: '#dc2626' }}>40ට අඩු %</td>
-                        {reportSubjectColumns.map((c) => (
-                          <td key={c} style={{ padding: '8px 6px', fontWeight: '600' }}>{reportAnalytics[c]?.below40Percent ?? '0.00'}%</td>
-                        ))}
-                      </tr>
-                      <tr style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: '#f0fdf4' }}>
-                        <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', color: '#16a34a' }}>40ට වැඩි %</td>
-                        {reportSubjectColumns.map((c) => (
-                          <td key={c} style={{ padding: '8px 6px', fontWeight: '600' }}>{reportAnalytics[c]?.above40Percent ?? '0.00'}%</td>
-                        ))}
-                      </tr>
-                      <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                        <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>උපරිම ලකුණු</td>
-                        {reportSubjectColumns.map((c) => (
-                          <td key={c} style={{ padding: '8px 6px', fontWeight: '600' }}>{reportAnalytics[c]?.max ?? '0.00'}</td>
-                        ))}
-                      </tr>
-                      <tr>
-                        <td style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>අවම ලකුණු</td>
-                        {reportSubjectColumns.map((c) => (
-                          <td key={c} style={{ padding: '8px 6px', fontWeight: '600' }}>{reportAnalytics[c]?.min ?? '0.00'}</td>
-                        ))}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              )}
 
               {/* Signatures Footer */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '60px', paddingTop: '20px', fontSize: '0.85rem', color: '#334155' }}>
