@@ -2,7 +2,7 @@ import React from 'react';
 import crest from '../assets/logo.jpg';
 import './Nav.css'; // Nav.css eka methanata import karanna
 
-export default function Navbar({ onOpenPortal }) {
+export default function Navbar({ onOpenPortal, onOpenTeacherPortal }) {
   return (
     <header className="navbar">
       <div className="nav-container">
@@ -30,6 +30,15 @@ export default function Navbar({ onOpenPortal }) {
                 onClick={onOpenPortal}
               >
                 Student Portal
+              </button>
+            </li>
+            <li>
+              <button
+                className="portal-btn"
+                onClick={onOpenTeacherPortal}
+                style={{ background: '#059669', color: '#fff' }}
+              >
+                Teacher Portal
               </button>
             </li>
           </ul>

@@ -1,3 +1,4 @@
+import TeacherUploadPortal from './components/TeacherUploadPortal';
 import { useState, useEffect } from 'react';
 import { client, urlFor } from './sanityClient';
 import './App.css';
@@ -7,7 +8,7 @@ import anthemAudio from './assets/anthem.mp3';
 import ResultsChecker from './components/ResultsChecker';
 
 export default function App() {
-  // 1. Navigation state eka: 'home' hari 'portal'
+  // 1. Navigation state: 'home', 'portal', ɔ 'teacher'
   const [currentView, setCurrentView] = useState('home');
 
   const [notices, setNotices] = useState([]);
@@ -66,7 +67,7 @@ export default function App() {
       .catch((err) => console.error("Anthem fetch error:", err));
   }, []);
 
-  // 2. Student Portal view eka select wela nam meka render wenawa
+  // 2. Student Portal view
   if (currentView === 'portal') {
     return (
       <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '30px 20px' }}>
@@ -92,11 +93,40 @@ export default function App() {
     );
   }
 
-  // 3. Normal School Homepage eka
+  // 3. Teacher Upload Portal view
+  if (currentView === 'teacher') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '30px 20px' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto 15px auto' }}>
+          <button
+            onClick={() => setCurrentView('home')}
+            style={{
+              padding: '8px 16px',
+              background: '#1e293b',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '0.9rem'
+            }}
+          >
+            ← Back to School Website
+          </button>
+        </div>
+        <TeacherUploadPortal />
+      </div>
+    );
+  }
+
+  // 4. Normal School Homepage
   return (
     <div>
-      {/* Navbar ekata portal open karana function eka pass karanawa */}
-      <Navbar onOpenPortal={() => setCurrentView('portal')} />
+      {/* Navbar we gɛt links fɔ Student Portal & Teacher Portal */}
+      <Navbar 
+        onOpenPortal={() => setCurrentView('portal')} 
+        onOpenTeacherPortal={() => setCurrentView('teacher')} 
+      />
 
       {/* Hero Section */}
       <section 
@@ -152,32 +182,32 @@ export default function App() {
       </section>
 
       {/* Principal's Message */}
-<section id="principal" className="section bg-light">
-  <div className="container">
-    <div className="principal-card">
-      <div className="principal-img-box">
-        <img 
-          src={principal?.photo ? urlFor(principal.photo).width(500).url() : principalImg} 
-          alt={principal?.name || "Principal"} 
-          className="principal-img" 
-        />
-      </div>
-      <div className="principal-text">
-        <div className="principal-header">
-          <h2 className="principal-title">විදුහල්පති පණිවිඩය</h2>
-          <div className="title-bar"></div>
+      <section id="principal" className="section bg-light">
+        <div className="container">
+          <div className="principal-card">
+            <div className="principal-img-box">
+              <img 
+                src={principal?.photo ? urlFor(principal.photo).width(500).url() : principalImg} 
+                alt={principal?.name || "Principal"} 
+                className="principal-img" 
+              />
+            </div>
+            <div className="principal-text">
+              <div className="principal-header">
+                <h2 className="principal-title">විදුහල්පති පණිවිඩය</h2>
+                <div className="title-bar"></div>
+              </div>
+              <p className="principal-message" style={{ whiteSpace: 'pre-line' }}>
+                {principal?.message || "පණිවිඩය පැටවෙමින් පවතී..."}
+              </p>
+              <div className="principal-name">
+                <h4>{principal?.name || "විදුහල්පතිතුමිය"}</h4>
+                <span>{principal?.title || "විදුහල්පති, තක්ෂිලා මහා විද්‍යාලය-හොරණ"}</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="principal-message" style={{ whiteSpace: 'pre-line' }}>
-          {principal?.message || "පණිවිඩය පැටවෙමින් පවතී..."}
-        </p>
-        <div className="principal-name">
-          <h4>{principal?.name || "විදුහල්පතිතුමිය"}</h4>
-          <span>{principal?.title || "විදුහල්පති, තක්ෂිලා මහා විද්‍යාලය-හොරණ"}</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+      </section>
 
       {/* School Anthem Section */}
       <section id="anthem" className="section anthem-section">
@@ -280,7 +310,7 @@ export default function App() {
                               height: '70px', 
                               objectFit: 'cover', 
                               borderRadius: '6px', 
-                              cursor: 'pointer'
+                              cursor: 'pointer' 
                             }} 
                           />
                         ))}
@@ -365,8 +395,8 @@ export default function App() {
               <li><a href="#home">මුල් පිටුව</a></li>
               <li><a href="#about">පාසල ගැන</a></li>
               <li><a href="#notices">නිවේදන</a></li>
-              {/* Footer ekenuth direct portal open karanna link ekak */}
               <li><a href="#portal" onClick={(e) => { e.preventDefault(); setCurrentView('portal'); }}>Student Portal</a></li>
+              <li><a href="#teacher" onClick={(e) => { e.preventDefault(); setCurrentView('teacher'); }}>Teacher Portal</a></li>
             </ul>
           </div>
           <div className="footer-col">
