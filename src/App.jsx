@@ -182,7 +182,6 @@ export default function App() {
   </div>
 </section>
 
-import { motion } from 'framer-motion';
 
 {/* About Section */}
 <section id="about" className="section">
@@ -250,7 +249,7 @@ import { motion } from 'framer-motion';
   </div>
 </section>
 
-      import { motion } from 'framer-motion';
+      
 
 {/* Principal's Message */}
 <section id="principal" className="section bg-light">
