@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import principalImg from './assets/principal.jpg';
 import anthemAudio from './assets/anthem.mp3';
 import ResultsChecker from './components/ResultsChecker';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function App() {
   // 1. Navigation state: 'home', 'portal', ɔ 'teacher'
@@ -128,116 +129,267 @@ export default function App() {
         onOpenTeacherPortal={() => setCurrentView('teacher')} 
       />
 
-      {/* Hero Section */}
-      <section 
-        id="home" 
-        className="hero"
-        style={
-          hero?.bannerImage 
-            ? { backgroundImage: `url(${urlFor(hero.bannerImage).width(1920).url()})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-            : {}
-        }
+     
+
+{/* Hero Section */}
+<section 
+  id="home" 
+  className="hero"
+  style={
+    hero?.bannerImage 
+      ? { backgroundImage: `url(${urlFor(hero.bannerImage).width(1920).url()})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+      : {}
+  }
+>
+  <div className="hero-overlay"></div>
+  
+  <div className="hero-content">
+    {/* 1. Main Title - Drops down with a smooth fade */}
+    <motion.h2
+      initial={{ opacity: 0, y: -30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+    >
+      {hero?.title || "දැනුමෙන් සපිරි හෙට දවසක් උදෙසා"}
+    </motion.h2>
+
+    {/* 2. Motto - Fades in softly from bottom */}
+    <motion.p 
+      className="motto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, delay: 0.25, ease: "easeOut" }}
+    >
+      {hero?.motto || "විද්‍යා දදාති විනයං"}
+    </motion.p>
+
+    {/* 3. Button - Scales up smoothly with tap & hover micro-interactions */}
+    <motion.a 
+      href="#about" 
+      className="btn"
+      initial={{ opacity: 0, scale: 0.85 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
+      whileHover={{ 
+        scale: 1.06, 
+        boxShadow: "0 8px 24px rgba(2, 132, 199, 0.45)" 
+      }}
+      whileTap={{ scale: 0.95 }}
+      style={{ display: 'inline-block' }}
+    >
+      {hero?.buttonText || "තවත් විස්තර"}
+    </motion.a>
+  </div>
+</section>
+
+import { motion } from 'framer-motion';
+
+{/* About Section */}
+<section id="about" className="section">
+  <div className="container">
+    {/* 1. ප්‍රධාන මාතෘකාව (Section Title) - Scroll වෙද්දි උඩින් පහළට Fade-in වීම */}
+    <motion.h2 
+      className="section-title"
+      initial={{ opacity: 0, y: -25 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
+      {about?.title || "පාසල පිළිබඳ කෙටියෙන්"}
+    </motion.h2>
+
+    <div className="about-grid">
+      <div className="about-text">
+        {/* 2. හැඳින්වීම් ඡේදය (Description) - සුමටව Fade-in වීම */}
+        <motion.p
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+        >
+          {about?.description ||
+            "අප පාසල දශක ගණනාවක අභිමානවත් ඉතිහාසයකට උරුමකම් කියන, ගුණගරුක හා දක්ෂ දරු පරපුරක් දැයට දායාද කරන ප්‍රමුඛ පෙළේ පාසලකි."}
+        </motion.p>
+
+        {/* 3. දැක්ම සහ මෙහෙවර (Vision & Mission Cards) */}
+        <div className="vision-mission">
+          {/* Vision Card - වම් පැත්තේ සිට Slide වෙමින් පැමිණීම & Hover Effect */}
+          <motion.div 
+            className="card"
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+            whileHover={{ y: -6, boxShadow: "0 12px 25px rgba(0, 0, 0, 0.08)" }}
+          >
+            <h3>අපගේ දැක්ම (Vision)</h3>
+            <p>
+              {about?.vision ||
+                "දැනුමෙන් හා යහපත් ආකල්පවලින් පිරිපුන් විශිෂ්ටතම ශ්‍රී ලාංකීය පුරවැසියෙකු බිහිකිරීම."}
+            </p>
+          </motion.div>
+
+          {/* Mission Card - දකුණු පැත්තේ සිට Slide වෙමින් පැමිණීම & Hover Effect */}
+          <motion.div 
+            className="card"
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+            whileHover={{ y: -6, boxShadow: "0 12px 25px rgba(0, 0, 0, 0.08)" }}
+          >
+            <h3>අපගේ මෙහෙවර (Mission)</h3>
+            <p>
+              {about?.mission ||
+                "ගුණාත්මක අධ්‍යාපනයක් හා සමබර පෞරුෂ සංවර්ධනයක් තුළින් ගෝලීය අභියෝග ජයගත හැකි නිපුණතා සපිරි දරු පරපුරක් නිර්මාණය කිරීම."}
+            </p>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+      import { motion } from 'framer-motion';
+
+{/* Principal's Message */}
+<section id="principal" className="section bg-light">
+  <div className="container">
+    <div className="principal-card">
+      
+      {/* 1. Principal Photo - Left Side Entrance with Subtle Hover Lift */}
+      <motion.div 
+        className="principal-img-box"
+        initial={{ opacity: 0, x: -35 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
       >
-        <div className="hero-overlay"></div>
-        <div className="hero-content">
-          <h2>{hero?.title || "දැනුමෙන් සපිරි හෙට දවසක් උදෙසා"}</h2>
-          <p className="motto">{hero?.motto || "විද්‍යා දදාති විනයං"}</p>
-          <a href="#about" className="btn">
-            {hero?.buttonText || "තවත් විස්තර"}
-          </a>
-        </div>
-      </section>
+        <motion.img 
+          src={principal?.photo ? urlFor(principal.photo).width(500).url() : principalImg} 
+          alt={principal?.name || "Principal"} 
+          className="principal-img"
+          whileHover={{ scale: 1.025 }}
+          transition={{ duration: 0.3 }}
+        />
+      </motion.div>
 
-      {/* About Section */}
-      <section id="about" className="section">
-        <div className="container">
-          <h2 className="section-title">
-            {about?.title || "පාසල පිළිබඳ කෙටියෙන්"}
-          </h2>
-          <div className="about-grid">
-            <div className="about-text">
-              <p>
-                {about?.description ||
-                  "අප පාසල දශක ගණනාවක අභිමානවත් ඉතිහාසයකට උරුමකම් කියන, ගුණගරුක හා දක්ෂ දරු පරපුරක් දැයට දායාද කරන ප්‍රමුඛ පෙළේ පාසලකි."}
-              </p>
-              <div className="vision-mission">
-                <div className="card">
-                  <h3>අපගේ දැක්ම (Vision)</h3>
-                  <p>
-                    {about?.vision ||
-                      "දැනුමෙන් හා යහපත් ආකල්පවලින් පිරිපුන් විශිෂ්ටතම ශ්‍රී ලාංකීය පුරවැසියෙකු බිහිකිරීම."}
-                  </p>
-                </div>
-                <div className="card">
-                  <h3>අපගේ මෙහෙවර (Mission)</h3>
-                  <p>
-                    {about?.mission ||
-                      "ගුණාත්මක අධ්‍යාපනයක් හා සමබර පෞරුෂ සංවර්ධනයක් තුළින් ගෝලීය අභියෝග ජයගත හැකි නිපුණතා සපිරි දරු පරපුරක් නිර්මාණය කිරීම."}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* 2. Message Content Area - Right Side Slide-in */}
+      <motion.div 
+        className="principal-text"
+        initial={{ opacity: 0, x: 35 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.7, delay: 0.15, ease: "easeOut" }}
+      >
+        <div className="principal-header">
+          <h2 className="principal-title">විදුහල්පති පණිවිඩය</h2>
+          {/* Animated Expanding Title Bar */}
+          <motion.div 
+            className="title-bar"
+            initial={{ width: 0 }}
+            whileInView={{ width: '50px' }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
+          />
         </div>
-      </section>
 
-      {/* Principal's Message */}
-      <section id="principal" className="section bg-light">
-        <div className="container">
-          <div className="principal-card">
-            <div className="principal-img-box">
-              <img 
-                src={principal?.photo ? urlFor(principal.photo).width(500).url() : principalImg} 
-                alt={principal?.name || "Principal"} 
-                className="principal-img" 
-              />
-            </div>
-            <div className="principal-text">
-              <div className="principal-header">
-                <h2 className="principal-title">විදුහල්පති පණිවිඩය</h2>
-                <div className="title-bar"></div>
-              </div>
-              <p className="principal-message" style={{ whiteSpace: 'pre-line' }}>
-                {principal?.message || "පණිවිඩය පැටවෙමින් පවතී..."}
-              </p>
-              <div className="principal-name">
-                <h4>{principal?.name || "විදුහල්පතිතුමිය"}</h4>
-                <span>{principal?.title || "විදුහල්පති, තක්ෂිලා මහා විද්‍යාලය-හොරණ"}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Message Paragraph */}
+        <motion.p 
+          className="principal-message" 
+          style={{ whiteSpace: 'pre-line' }}
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+        >
+          {principal?.message || "පණිවිඩය පැටවෙමින් පවතී..."}
+        </motion.p>
 
-      {/* School Anthem Section */}
-      <section id="anthem" className="section anthem-section">
-        <div className="container">
-          <h2 className="section-title">{anthem?.title || "පාසල් ගීතය"}</h2>
-          <div className="anthem-card">
-            {anthem?.audioUrl && (
-              <div className="anthem-audio-box">
-                <p>🎧 පාසල් ගීතයට සවන් දෙන්න</p>
-                <audio controls src={anthem.audioUrl}>
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
-            )}
-            <div className="anthem-lyrics">
-              <div className={`lyrics-wrapper ${showFullLyrics ? "expanded" : "collapsed"}`}>
-                <p style={{ whiteSpace: "pre-line" }}>
-                  {anthem?.lyrics || "පාසල් ගීතයේ පද පේළි මෙතැන දිස්වේ..."}
-                </p>
-              </div>
-              <button 
-                className="see-more-btn"
-                onClick={() => setShowFullLyrics(!showFullLyrics)}
-              >
-                {showFullLyrics ? "අඩු කරන්න ▲" : "තව කියවන්න (See More) ▼"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Principal Name & Title */}
+        <motion.div 
+          className="principal-name"
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.45, ease: "easeOut" }}
+        >
+          <h4>{principal?.name || "විදුහල්පතිතුමිය"}</h4>
+          <span>{principal?.title || "විදුහල්පති, තක්ෂිලා මහා විද්‍යාලය-හොරණ"}</span>
+        </motion.div>
+      </motion.div>
+
+    </div>
+  </div>
+</section>
+
+     
+
+{/* School Anthem Section */}
+<section id="anthem" className="section anthem-section">
+  <div className="container">
+    {/* 1. Title Fade-down with Scroll Trigger */}
+    <motion.h2 
+      className="section-title"
+      initial={{ opacity: 0, y: -20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
+      {anthem?.title || "පාසල් ගීතය"}
+    </motion.h2>
+
+    {/* 2. Main Anthem Card - Smooth pop-in */}
+    <motion.div 
+      className="anthem-card"
+      initial={{ opacity: 0, y: 30, scale: 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
+      {/* Audio Player Box */}
+      {anthem?.audioUrl && (
+        <motion.div 
+          className="anthem-audio-box"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <p>🎧 පාසල් ගීතයට සවන් දෙන්න</p>
+          <audio controls src={anthem.audioUrl}>
+            Your browser does not support the audio element.
+          </audio>
+        </motion.div>
+      )}
+
+      {/* Lyrics Area with Smooth Animated Height Transition */}
+      <div className="anthem-lyrics">
+        <motion.div 
+          className={`lyrics-wrapper ${showFullLyrics ? "expanded" : "collapsed"}`}
+          animate={{ height: showFullLyrics ? "auto" : "120px" }}
+          transition={{ duration: 0.45, ease: [0.04, 0.62, 0.23, 0.98] }}
+          style={{ overflow: "hidden" }}
+        >
+          <p style={{ whiteSpace: "pre-line" }}>
+            {anthem?.lyrics || "පාසල් ගීතයේ පද පේළි මෙතැන දිස්වේ..."}
+          </p>
+        </motion.div>
+
+        {/* 3. Interactive See More Button */}
+        <motion.button 
+          className="see-more-btn"
+          onClick={() => setShowFullLyrics(!showFullLyrics)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        >
+          {showFullLyrics ? "අඩු කරන්න ▲" : "තව කියවන්න (See More) ▼"}
+        </motion.button>
+      </div>
+    </motion.div>
+  </div>
+</section>
 
       {/* Events Section */}
       <section id="events" className="section">
