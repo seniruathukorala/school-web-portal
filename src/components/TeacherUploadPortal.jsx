@@ -172,6 +172,14 @@ const TeacherUploadPortal = () => {
     }
   });
 
+  const formatMarkValue = (val) => {
+    if (val === undefined || val === null || String(val).trim() === '') return '';
+    const cleanStr = String(val).trim();
+    if (cleanStr.toLowerCase() === 'ab') return 'Ab';
+    const num = Number(cleanStr);
+    return isNaN(num) ? cleanStr : num;
+  };
+
   // Flexible Sanity fetch for both Current and Previous Terms
   const fetchSheetData = async (targetTerm) => {
     try {
@@ -219,7 +227,6 @@ const TeacherUploadPortal = () => {
       let idx = '';
       let name = '';
 
-      // 1. Index No saha Name clean extraction
       Object.keys(row).forEach((k) => {
         const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
         if (['indexno', 'index', 'admissionno', 'athulathankaya'].includes(cleanK)) {
@@ -237,7 +244,6 @@ const TeacherUploadPortal = () => {
         b3: { sub: '', mark: '' }
       };
 
-      // 2. Strict blacklist - mewa kawadawath subject widiyata ganna baha
       const blacklistedKeys = [
         'studentname', 'name', 'nama',
         'indexno', 'index', 'admissionno', 'athulathankaya',
@@ -249,7 +255,8 @@ const TeacherUploadPortal = () => {
         const cleanCol = col.toLowerCase().replace(/[^a-z0-9]/g, '');
 
         if (!blacklistedKeys.includes(cleanCol)) {
-          const markVal = isCopyingPrevTerm ? '' : (row[col] !== '' ? row[col] : '');
+          const rawVal = row[col];
+          const markVal = isCopyingPrevTerm ? '' : (rawVal !== '' ? String(rawVal) : '');
 
           const matchedCore = coreList.find(
             c => c.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanCol
@@ -258,7 +265,6 @@ const TeacherUploadPortal = () => {
           if (matchedCore) {
             coreMarks[matchedCore] = markVal;
           } else {
-            // Actual basket subjects only
             if (!baskets.b1.sub) baskets.b1 = { sub: col, mark: markVal };
             else if (!baskets.b2.sub) baskets.b2 = { sub: col, mark: markVal };
             else if (!baskets.b3.sub) baskets.b3 = { sub: col, mark: markVal };
@@ -284,15 +290,13 @@ const TeacherUploadPortal = () => {
       setTableLoading(true);
       setUploadStatus(null);
       try {
-        // 1. Current term data
         const currentData = await fetchSheetData(term);
 
         if (currentData && currentData.length > 0) {
           setTableRows(mapJsonToTableRows(currentData, false));
           setHasExistingData(true);
-          setIsEditing(false); // Default to View mode
+          setIsEditing(false);
         } else {
-          // 2. Fallback to previous terms (Term 2 -> Term 1, Term 3 -> Term 2 -> Term 1)
           setHasExistingData(false);
           setIsEditing(true);
 
@@ -305,7 +309,6 @@ const TeacherUploadPortal = () => {
               const prevTerm = termOrder[i];
               const prevData = await fetchSheetData(prevTerm);
               if (prevData && prevData.length > 0) {
-                // Names & Index numbers copy wenawa, marks his wenawa
                 setTableRows(mapJsonToTableRows(prevData, true));
                 prevFound = true;
                 break;
@@ -363,7 +366,7 @@ const TeacherUploadPortal = () => {
     }));
   };
 
-  // Direct Save to Sanity
+  // Direct Save to Sanity via Native Fetch to avoid dynamic bundle chunk error
   const handleSaveToSanity = async () => {
     const validRows = tableRows.filter(r => r.indexNo.trim() !== '' && r.name.trim() !== '');
     if (validRows.length === 0) {
@@ -384,20 +387,18 @@ const TeacherUploadPortal = () => {
         };
 
         coreList.forEach(sub => {
-          item[sub] = row.coreMarks[sub] !== undefined && row.coreMarks[sub] !== '' 
-            ? Number(row.coreMarks[sub]) 
-            : '';
+          item[sub] = formatMarkValue(row.coreMarks[sub]);
         });
 
         if (category === 'junior') {
           if (row.baskets.b1.sub) {
-            item[row.baskets.b1.sub] = row.baskets.b1.mark !== '' ? Number(row.baskets.b1.mark) : '';
+            item[row.baskets.b1.sub] = formatMarkValue(row.baskets.b1.mark);
           }
         } else if (category === 'ol') {
           ['b1', 'b2', 'b3'].forEach(bKey => {
             const b = row.baskets[bKey];
             if (b.sub) {
-              item[b.sub] = b.mark !== '' ? Number(b.mark) : '';
+              item[b.sub] = formatMarkValue(b.mark);
             }
           });
         }
@@ -413,10 +414,41 @@ const TeacherUploadPortal = () => {
 
       const safeFileName = `Results_${year}_${grade}_${classSection}_${term}.xlsx`;
 
-      const fileAsset = await client.assets.upload('file', finalBlob, {
-        filename: safeFileName,
-        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
+      const sanityConfig = client.config();
+      const projectId = sanityConfig.projectId;
+      const dataset = sanityConfig.dataset;
+      const token = sanityConfig.token;
+
+      let fileAssetId = null;
+
+      // Direct REST upload
+      if (token) {
+        const uploadResponse = await fetch(
+          `https://${projectId}.api.sanity.io/v2021-06-07/assets/files/${dataset}?filename=${encodeURIComponent(safeFileName)}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+              Authorization: `Bearer ${token}`
+            },
+            body: finalBlob
+          }
+        );
+
+        if (!uploadResponse.ok) {
+          const errBody = await uploadResponse.json();
+          throw new Error(errBody.message || 'Direct asset upload failed');
+        }
+
+        const fileAssetData = await uploadResponse.json();
+        fileAssetId = fileAssetData.document._id;
+      } else {
+        const fileAsset = await client.assets.upload('file', finalBlob, {
+          filename: safeFileName,
+          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        fileAssetId = fileAsset._id;
+      }
 
       const cleanGrade = grade.toLowerCase().replace(/\s+/g, '');
       const cleanTerm = term.toLowerCase().replace(/\s+/g, '');
@@ -436,7 +468,7 @@ const TeacherUploadPortal = () => {
           _type: 'file',
           asset: {
             _type: 'reference',
-            _ref: fileAsset._id,
+            _ref: fileAssetId,
           },
         },
       });
@@ -789,18 +821,21 @@ const TeacherUploadPortal = () => {
                         )}
                       </td>
 
-                      {/* Core Marks */}
+                      {/* Core Marks: Text input allows digits and "Ab" */}
                       {coreList.map((sub) => (
                         <td key={sub} style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
                           {isEditing ? (
                             <input
-                              type="number"
+                              type="text"
                               value={row.coreMarks[sub] ?? ''}
                               onChange={(e) => handleCoreMarkChange(row.id, sub, e.target.value)}
-                              style={{ width: '50px', padding: '6px 2px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.82rem', textAlign: 'center' }}
+                              placeholder="-"
+                              style={{ width: '52px', padding: '6px 2px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.82rem', textAlign: 'center', fontWeight: '600' }}
                             />
                           ) : (
-                            <span>{row.coreMarks[sub] !== undefined && row.coreMarks[sub] !== '' ? row.coreMarks[sub] : '-'}</span>
+                            <span style={{ fontWeight: row.coreMarks[sub] === 'Ab' ? '700' : 'normal', color: row.coreMarks[sub] === 'Ab' ? '#dc2626' : 'inherit' }}>
+                              {row.coreMarks[sub] !== undefined && row.coreMarks[sub] !== '' ? row.coreMarks[sub] : '-'}
+                            </span>
                           )}
                         </td>
                       ))}
@@ -821,11 +856,11 @@ const TeacherUploadPortal = () => {
                                 ))}
                               </select>
                               <input
-                                type="number"
+                                type="text"
                                 value={row.baskets.b1.mark}
                                 onChange={(e) => handleBasketChange(row.id, 'b1', 'mark', e.target.value)}
-                                placeholder="Marks"
-                                style={{ width: '45px', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', textAlign: 'center' }}
+                                placeholder="Mark/Ab"
+                                style={{ width: '55px', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', textAlign: 'center', fontWeight: '600' }}
                               />
                             </div>
                           ) : (
@@ -852,11 +887,11 @@ const TeacherUploadPortal = () => {
                                     ))}
                                   </select>
                                   <input
-                                    type="number"
+                                    type="text"
                                     value={row.baskets[bKey].mark}
                                     onChange={(e) => handleBasketChange(row.id, bKey, 'mark', e.target.value)}
-                                    placeholder="Marks"
-                                    style={{ width: '45px', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', textAlign: 'center' }}
+                                    placeholder="Mark/Ab"
+                                    style={{ width: '55px', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', textAlign: 'center', fontWeight: '600' }}
                                   />
                                 </div>
                               ) : (
