@@ -79,7 +79,6 @@ const TeacherUploadPortal = () => {
     fontSize: '0.95rem'
   };
 
-  // Grade category helper
   const getGradeCategory = () => {
     const num = parseInt(grade.replace(/\D/g, ''), 10);
     if (num >= 6 && num <= 9) return 'junior';
@@ -107,18 +106,17 @@ const TeacherUploadPortal = () => {
     }
   };
 
-  // Helper: Analytics calculation logic (Preserved exactly as your original code)
   const calculateAnalytics = (rows) => {
     if (!rows || rows.length === 0) return {};
 
     const ignoredKeys = [
-      'studentname', 'name', 'indexno', 'index', 'admissionno', 
+      'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 
       'grade', 'term', 'section', 'class', 'classsection', 'dob', 
-      'date of birth', 'birthday', '__rownum__', 'total', 'average', 'rank', 'place'
+      'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place'
     ];
 
     const subjectKeys = Object.keys(rows[0]).filter(
-      (key) => !ignoredKeys.includes(key.toLowerCase().trim())
+      (key) => !ignoredKeys.includes(key.toLowerCase().replace(/[^a-z0-9]/g, ''))
     );
 
     const stats = {};
@@ -174,36 +172,64 @@ const TeacherUploadPortal = () => {
     }
   });
 
-  // Fetch sheet from Sanity and parse rows helper
+  // Flexible Sanity fetch for both Current and Previous Terms
   const fetchSheetData = async (targetTerm) => {
-    const query = `*[_type == "resultSheet" && year == $year && grade == $grade && classSection == $section && term == $targetTerm][0]{
-      title,
-      "fileUrl": file.asset->url
-    }`;
-    const resultDoc = await client.fetch(query, {
-      year,
-      grade,
-      section: classSection,
-      targetTerm
-    });
+    try {
+      const numGrade = grade.replace(/\D/g, '').trim();
+      const cleanSection = classSection.trim();
 
-    if (!resultDoc || !resultDoc.fileUrl) return null;
+      const query = `*[_type == "resultSheet" && term == $targetTerm && (grade == $grade || grade == $shortGrade || grade == $pureGrade) && (classSection == $section || classSection == $fullSection || classSection == $dashSection)][0]{
+        title,
+        year,
+        grade,
+        term,
+        classSection,
+        "fileUrl": file.asset->url
+      }`;
 
-    const response = await fetch(resultDoc.fileUrl);
-    const arrayBuffer = await response.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'buffer' });
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
-    return XLSX.utils.sheet_to_json(worksheet);
+      const resultDoc = await client.fetch(query, {
+        targetTerm: targetTerm,
+        grade: grade,
+        shortGrade: `Grade ${numGrade}`,
+        pureGrade: numGrade,
+        section: cleanSection,
+        fullSection: `${numGrade}-${cleanSection}`,
+        dashSection: `${numGrade} - ${cleanSection}`
+      });
+
+      if (!resultDoc || !resultDoc.fileUrl) return null;
+
+      const response = await fetch(resultDoc.fileUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'buffer' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      return XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+    } catch (err) {
+      console.error(`fetchSheetData error for ${targetTerm}:`, err);
+      return null;
+    }
   };
 
-  // Convert raw JSON rows from XLSX to our table structure
+  // Convert raw JSON rows to Table Rows without corrupting Baskets
   const mapJsonToTableRows = (jsonData, isCopyingPrevTerm = false) => {
     const coreList = getActiveCoreSubjects();
 
     return jsonData.map((row) => {
-      const idx = row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index || '';
-      const name = row.StudentName || row.Name || '';
+      let idx = '';
+      let name = '';
+
+      // 1. Index No saha Name clean extraction
+      Object.keys(row).forEach((k) => {
+        const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (['indexno', 'index', 'admissionno', 'athulathankaya'].includes(cleanK)) {
+          idx = row[k];
+        }
+        if (['studentname', 'name', 'nama'].includes(cleanK)) {
+          name = row[k];
+        }
+      });
+
       const coreMarks = {};
       const baskets = {
         b1: { sub: '', mark: '' },
@@ -211,20 +237,28 @@ const TeacherUploadPortal = () => {
         b3: { sub: '', mark: '' }
       };
 
-      const ignoredKeys = [
-        'studentname', 'name', 'indexno', 'index', 'admissionno', 
-        'grade', 'term', 'section', 'class', 'classsection', 'dob', 
-        'date of birth', 'birthday', '__rownum__', 'total', 'average', 'rank', 'place'
+      // 2. Strict blacklist - mewa kawadawath subject widiyata ganna baha
+      const blacklistedKeys = [
+        'studentname', 'name', 'nama',
+        'indexno', 'index', 'admissionno', 'athulathankaya',
+        'grade', 'term', 'section', 'class', 'classsection', 
+        'dob', 'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place'
       ];
 
       Object.keys(row).forEach((col) => {
-        if (!ignoredKeys.includes(col.toLowerCase().trim())) {
-          const markVal = isCopyingPrevTerm ? '' : (row[col] ?? '');
+        const cleanCol = col.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-          if (coreList.includes(col)) {
-            coreMarks[col] = markVal;
+        if (!blacklistedKeys.includes(cleanCol)) {
+          const markVal = isCopyingPrevTerm ? '' : (row[col] !== '' ? row[col] : '');
+
+          const matchedCore = coreList.find(
+            c => c.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanCol
+          );
+
+          if (matchedCore) {
+            coreMarks[matchedCore] = markVal;
           } else {
-            // Identified as Basket / Aesthetic
+            // Actual basket subjects only
             if (!baskets.b1.sub) baskets.b1 = { sub: col, mark: markVal };
             else if (!baskets.b2.sub) baskets.b2 = { sub: col, mark: markVal };
             else if (!baskets.b3.sub) baskets.b3 = { sub: col, mark: markVal };
@@ -234,8 +268,8 @@ const TeacherUploadPortal = () => {
 
       return {
         id: idx || Date.now() + Math.random(),
-        indexNo: String(idx),
-        name: String(name),
+        indexNo: String(idx ?? '').trim(),
+        name: String(name ?? '').trim(),
         coreMarks,
         baskets
       };
@@ -250,15 +284,15 @@ const TeacherUploadPortal = () => {
       setTableLoading(true);
       setUploadStatus(null);
       try {
-        // 1. Current Term check
+        // 1. Current term data
         const currentData = await fetchSheetData(term);
 
         if (currentData && currentData.length > 0) {
           setTableRows(mapJsonToTableRows(currentData, false));
           setHasExistingData(true);
-          setIsEditing(false); // View mode
+          setIsEditing(false); // Default to View mode
         } else {
-          // 2. Data na -> Fallback to previous terms for indexes & names
+          // 2. Fallback to previous terms (Term 2 -> Term 1, Term 3 -> Term 2 -> Term 1)
           setHasExistingData(false);
           setIsEditing(true);
 
@@ -271,6 +305,7 @@ const TeacherUploadPortal = () => {
               const prevTerm = termOrder[i];
               const prevData = await fetchSheetData(prevTerm);
               if (prevData && prevData.length > 0) {
+                // Names & Index numbers copy wenawa, marks his wenawa
                 setTableRows(mapJsonToTableRows(prevData, true));
                 prevFound = true;
                 break;
@@ -292,7 +327,6 @@ const TeacherUploadPortal = () => {
     loadTableData();
   }, [isAuthenticated, activeTab, year, grade, classSection, term, alStream]);
 
-  // Row update handlers
   const handleAddRow = () => {
     setTableRows(prev => [...prev, createBlankRow()]);
   };
@@ -329,7 +363,7 @@ const TeacherUploadPortal = () => {
     }));
   };
 
-  // Direct Save to Sanity (Transforms table to XLSX asset & updates resultSheet document)
+  // Direct Save to Sanity
   const handleSaveToSanity = async () => {
     const validRows = tableRows.filter(r => r.indexNo.trim() !== '' && r.name.trim() !== '');
     if (validRows.length === 0) {
@@ -343,21 +377,18 @@ const TeacherUploadPortal = () => {
     try {
       const coreList = getActiveCoreSubjects();
 
-      // Transform rows to flat object format compatible with Sanity reports
       const flatData = validRows.map(row => {
         const item = {
           'Index No': row.indexNo.trim(),
           'Student Name': row.name.trim()
         };
 
-        // Core subjects
         coreList.forEach(sub => {
           item[sub] = row.coreMarks[sub] !== undefined && row.coreMarks[sub] !== '' 
             ? Number(row.coreMarks[sub]) 
             : '';
         });
 
-        // Basket / Aesthetics
         if (category === 'junior') {
           if (row.baskets.b1.sub) {
             item[row.baskets.b1.sub] = row.baskets.b1.mark !== '' ? Number(row.baskets.b1.mark) : '';
@@ -374,7 +405,6 @@ const TeacherUploadPortal = () => {
         return item;
       });
 
-      // Build XLSX workbook
       const worksheet = XLSX.utils.json_to_sheet(flatData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Results');
@@ -413,7 +443,7 @@ const TeacherUploadPortal = () => {
 
       setUploadStatus({
         type: 'success',
-        msg: `ලකුණු සාර්ථකව සුරැකිණි (Saved successfully): ${documentTitle} ✅`,
+        msg: `ලකුණු සාර්ථකව සුරැකිණි: ${documentTitle} ✅`,
       });
       setIsEditing(false);
       setHasExistingData(true);
@@ -428,7 +458,6 @@ const TeacherUploadPortal = () => {
     }
   };
 
-  // Fetch Class Sheet for Reporting (TAB 2)
   const handleFetchClassReport = async () => {
     setReportLoading(true);
     setReportError('');
@@ -437,14 +466,21 @@ const TeacherUploadPortal = () => {
     setReportFileUrl('');
 
     try {
-      const query = `*[_type == "resultSheet" && grade == $grade && term == $term && classSection == $section][0]{
+      const numGrade = grade.replace(/\D/g, '').trim();
+      const cleanSection = classSection.trim();
+
+      const query = `*[_type == "resultSheet" && term == $term && (grade == $grade || grade == $shortGrade || grade == $pureGrade) && (classSection == $section || classSection == $fullSection || classSection == $dashSection)][0]{
         title,
         "fileUrl": file.asset->url
       }`;
       const resultDoc = await client.fetch(query, {
         grade: grade,
+        shortGrade: `Grade ${numGrade}`,
+        pureGrade: numGrade,
         term: term,
-        section: classSection,
+        section: cleanSection,
+        fullSection: `${numGrade}-${cleanSection}`,
+        dashSection: `${numGrade} - ${cleanSection}`
       });
 
       if (!resultDoc || !resultDoc.fileUrl) {
@@ -460,7 +496,7 @@ const TeacherUploadPortal = () => {
       const workbook = XLSX.read(arrayBuffer, { type: 'buffer' });
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
-      const rawJsonData = XLSX.utils.sheet_to_json(worksheet);
+      const rawJsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
       const cleanedReportData = rawJsonData.filter((row) => {
         const idx = row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index;
@@ -496,10 +532,10 @@ const TeacherUploadPortal = () => {
 
   const reportSubjectColumns = reportRows.length > 0
     ? Object.keys(reportRows[0]).filter(k => ![
-        'studentname', 'name', 'indexno', 'index', 'admissionno', 
+        'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 
         'grade', 'term', 'section', 'class', 'classsection', 'dob', 
-        'date of birth', 'birthday', '__rownum__', 'total', 'average', 'rank', 'place'
-      ].includes(k.toLowerCase().trim()))
+        'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place'
+      ].includes(k.toLowerCase().replace(/[^a-z0-9]/g, '')))
     : [];
 
   const coreList = getActiveCoreSubjects();
@@ -646,7 +682,6 @@ const TeacherUploadPortal = () => {
       {/* TAB 1: DIRECT RESULT ENTRY & EDIT VIEW */}
       {activeTab === 'entry' && (
         <div>
-          {/* Action Header for Table */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
             <div>
               <span style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
@@ -654,7 +689,7 @@ const TeacherUploadPortal = () => {
               </span>
               <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
                 {hasExistingData 
-                  ? (isEditing ? '✏️ Edit Mode: අවශ්‍ය වෙනස්කම් සිදුකර "Save All Changes" ඔබන්න.' : '🔒 View Mode: දත්ත සංස්කරණය කිරීමට "Edit Marks" ඔබන්න.')
+                  ? (isEditing ? '✏️ Edit Mode: අවශ්‍ය වෙනස්කම් සිදුකර "Save All Results" ඔබන්න.' : '🔒 View Mode: දත්ත සංස්කරණය කිරීමට "Edit Marks" ඔබන්න.')
                   : '✨ නව ලකුණු ඇතුළත් කිරීම (කලින් Term එකේ නම් හා අංක ස්වයංක්‍රීයව එක්විය හැක).'}
               </p>
             </div>
@@ -875,14 +910,12 @@ const TeacherUploadPortal = () => {
 
           {reportRows.length > 0 && (
             <div id="report-sheet">
-              {/* Header Title */}
               <div style={{ textAlign: 'center', marginBottom: '14px' }}>
                 <h2 style={{ margin: '0 0 4px 0', fontSize: '1.4rem', color: '#0f172a' }}>
                   ලකුණු වාර්තාව - ශ්‍රේණිය {grade.replace('Grade ', '')}_{classSection} ({term})
                 </h2>
               </div>
 
-              {/* Search Bar & Action Buttons */}
               <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                 <input
                   type="text"
@@ -911,7 +944,6 @@ const TeacherUploadPortal = () => {
                 </div>
               </div>
 
-              {/* Master Table: Students + Integrated Analytics at the Bottom */}
               <div style={{ overflowX: 'auto', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#ffffff' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'center' }}>
                   <thead>
@@ -924,7 +956,6 @@ const TeacherUploadPortal = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Student Rows */}
                     {filteredReportRows.map((row, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
                         <td style={{ padding: '8px 6px', border: '1px solid #e2e8f0', fontWeight: '700' }}>
@@ -941,7 +972,6 @@ const TeacherUploadPortal = () => {
                       </tr>
                     ))}
 
-                    {/* Integrated Analytics Rows */}
                     {Object.keys(reportAnalytics).length > 0 && (
                       <>
                         <tr style={{ height: '14px', backgroundColor: '#f1f5f9' }}>
@@ -1019,7 +1049,6 @@ const TeacherUploadPortal = () => {
                 </table>
               </div>
 
-              {/* Signatures Footer */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '60px', paddingTop: '20px', fontSize: '0.85rem', color: '#334155' }}>
                 <div>
                   <p style={{ margin: '0 0 10px 0' }}>පන්තිභාර ගුරුභවතාගේ නම : ..............................................</p>
