@@ -160,6 +160,55 @@ const TeacherUploadPortal = () => {
     return stats;
   };
 
+  // Total, Average saha Class Rank auto calculate karana helper eka
+  const enrichRowsWithRankAndStats = (rows, subjectCols) => {
+    if (!rows || rows.length === 0) return [];
+
+    const calculatedRows = rows.map((row) => {
+      let total = 0;
+      let hasValidMarks = false;
+
+      subjectCols.forEach((subj) => {
+        const val = row[subj];
+        if (val !== undefined && val !== null && String(val).trim() !== '') {
+          const cleanStr = String(val).trim().toLowerCase();
+          if (cleanStr !== 'ab') {
+            const num = Number(cleanStr);
+            if (!isNaN(num)) {
+              total += num;
+              hasValidMarks = true;
+            }
+          } else {
+            hasValidMarks = true; // Absent unath exam count wenawa
+          }
+        }
+      });
+
+      const avg = subjectCols.length > 0 ? (total / subjectCols.length).toFixed(2) : '0.00';
+
+      return {
+        ...row,
+        __total: hasValidMarks ? total : '-',
+        __numericTotal: total,
+        __avg: hasValidMarks ? avg : '-'
+      };
+    });
+
+    // Rank calculate karanawa Total descending order ekata
+    const sortedTotals = [...new Set(calculatedRows.map(r => r.__numericTotal))].sort((a, b) => b - a);
+
+    return calculatedRows.map((row) => {
+      let rank = '-';
+      if (row.__total !== '-') {
+        rank = sortedTotals.indexOf(row.__numericTotal) + 1;
+      }
+      return {
+        ...row,
+        __rank: rank
+      };
+    });
+  };
+
   const createBlankRow = () => ({
     id: Date.now() + Math.random(),
     indexNo: '',
@@ -180,7 +229,6 @@ const TeacherUploadPortal = () => {
     return isNaN(num) ? cleanStr : num;
   };
 
-  // Robust query generator helper
   const getSanityQueryAndParams = (targetTerm) => {
     const numGrade = grade.replace(/\D/g, '').trim();
     const cleanSection = classSection.trim();
@@ -293,7 +341,6 @@ const TeacherUploadPortal = () => {
     });
   };
 
-  // Smart Auto-Load & Previous Term Fallback
   useEffect(() => {
     if (!isAuthenticated || activeTab !== 'entry') return;
 
@@ -377,7 +424,6 @@ const TeacherUploadPortal = () => {
     }));
   };
 
-  // Direct Save to Sanity via Native Fetch
   const handleSaveToSanity = async () => {
     const validRows = tableRows.filter(r => r.indexNo.trim() !== '' && r.name.trim() !== '');
     if (validRows.length === 0) {
@@ -500,7 +546,6 @@ const TeacherUploadPortal = () => {
     }
   };
 
-  // TAB 2: Class Report Fetcher (Fixed for lenient key matches)
   const handleFetchClassReport = async () => {
     setReportLoading(true);
     setReportError('');
@@ -553,7 +598,17 @@ const TeacherUploadPortal = () => {
       if (cleanedReportData.length === 0) {
         setReportError('ශිෂ්‍ය දත්ත හඳුනාගත නොහැකි විය. කරුණාකර "Result Entry" වෙතින් නැවත Save කරන්න.');
       } else {
-        setReportRows(cleanedReportData);
+        const sampleKeys = Object.keys(cleanedReportData[0]);
+        const subjectCols = sampleKeys.filter(k => ![
+          'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
+          'grade', 'term', 'section', 'class', 'classsection', 'dob', 
+          'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place'
+        ].includes(k.toLowerCase().replace(/[^a-z0-9]/g, '')));
+
+        // Total, Average, saha Rank enrich karanawa
+        const enrichedData = enrichRowsWithRankAndStats(cleanedReportData, subjectCols);
+
+        setReportRows(enrichedData);
         setReportAnalytics(calculateAnalytics(cleanedReportData));
       }
     } catch (err) {
@@ -579,7 +634,8 @@ const TeacherUploadPortal = () => {
     ? Object.keys(reportRows[0]).filter(k => ![
         'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
         'grade', 'term', 'section', 'class', 'classsection', 'dob', 
-        'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place'
+        'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place',
+        '__total', '__numericTotal', '__avg', '__rank'
       ].includes(k.toLowerCase().replace(/[^a-z0-9]/g, '')))
     : [];
 
@@ -621,7 +677,7 @@ const TeacherUploadPortal = () => {
 
   // --- VIEW 2: Dashboard with Tabs ---
   return (
-    <div style={{ maxWidth: '1150px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '16px', padding: '32px', boxShadow: '0 10px 25px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0', fontFamily: 'Segoe UI, Roboto, sans-serif' }}>
+    <div style={{ maxWidth: '1250px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '16px', padding: '32px', boxShadow: '0 10px 25px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0', fontFamily: 'Segoe UI, Roboto, sans-serif' }}>
       
       <style>{`
         @media print {
@@ -937,7 +993,7 @@ const TeacherUploadPortal = () => {
         </div>
       )}
 
-      {/* TAB 2: CLASS MARK SHEET (REPORT VIEWER & ANALYTICS) */}
+      {/* TAB 2: CLASS MARK SHEET (REPORT VIEWER WITH TOTAL, AVERAGE & RANK) */}
       {activeTab === 'report' && (
         <div>
           <div className="no-print" style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
@@ -1001,6 +1057,10 @@ const TeacherUploadPortal = () => {
                       {reportSubjectColumns.map((col) => (
                         <th key={col} style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b' }}>{col}</th>
                       ))}
+                      {/* Added Final Columns */}
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '70px', fontWeight: '700' }}>එකතුව</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '70px', fontWeight: '700' }}>සාමාන්‍යය</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1d4ed8', backgroundColor: '#eff6ff', width: '65px', fontWeight: '800' }}>ස්ථානය</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1017,13 +1077,24 @@ const TeacherUploadPortal = () => {
                             {String(row[col] ?? '-')}
                           </td>
                         ))}
+                        {/* Rendered Total, Average, and Rank */}
+                        <td style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '700', backgroundColor: '#f8fafc' }}>
+                          {row.__total}
+                        </td>
+                        <td style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '600', backgroundColor: '#f8fafc' }}>
+                          {row.__avg !== '-' ? `${row.__avg}%` : '-'}
+                        </td>
+                        <td style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '800', color: '#2563eb', backgroundColor: '#eff6ff' }}>
+                          {row.__rank}
+                        </td>
                       </tr>
                     ))}
 
+                    {/* Integrated Analytics Rows */}
                     {Object.keys(reportAnalytics).length > 0 && (
                       <>
                         <tr style={{ height: '14px', backgroundColor: '#f1f5f9' }}>
-                          <td colSpan={2 + reportSubjectColumns.length} style={{ border: '1px solid #cbd5e1', padding: 0 }}></td>
+                          <td colSpan={2 + reportSubjectColumns.length + 3} style={{ border: '1px solid #cbd5e1', padding: 0 }}></td>
                         </tr>
 
                         <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
@@ -1035,6 +1106,7 @@ const TeacherUploadPortal = () => {
                               {reportAnalytics[c]?.below40 ?? 0}
                             </td>
                           ))}
+                          <td colSpan={3} style={{ border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}></td>
                         </tr>
 
                         <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
@@ -1046,6 +1118,7 @@ const TeacherUploadPortal = () => {
                               {reportAnalytics[c]?.above40 ?? 0}
                             </td>
                           ))}
+                          <td colSpan={3} style={{ border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}></td>
                         </tr>
 
                         <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#fef2f2' }}>
@@ -1057,6 +1130,7 @@ const TeacherUploadPortal = () => {
                               {reportAnalytics[c]?.below40Percent ?? '0.00'}%
                             </td>
                           ))}
+                          <td colSpan={3} style={{ border: '1px solid #cbd5e1', backgroundColor: '#fef2f2' }}></td>
                         </tr>
 
                         <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#f0fdf4' }}>
@@ -1068,6 +1142,7 @@ const TeacherUploadPortal = () => {
                               {reportAnalytics[c]?.above40Percent ?? '0.00'}%
                             </td>
                           ))}
+                          <td colSpan={3} style={{ border: '1px solid #cbd5e1', backgroundColor: '#f0fdf4' }}></td>
                         </tr>
 
                         <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
@@ -1079,6 +1154,7 @@ const TeacherUploadPortal = () => {
                               {reportAnalytics[c]?.max ?? '0.00'}
                             </td>
                           ))}
+                          <td colSpan={3} style={{ border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}></td>
                         </tr>
 
                         <tr>
@@ -1090,6 +1166,7 @@ const TeacherUploadPortal = () => {
                               {reportAnalytics[c]?.min ?? '0.00'}
                             </td>
                           ))}
+                          <td colSpan={3} style={{ border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}></td>
                         </tr>
                       </>
                     )}
