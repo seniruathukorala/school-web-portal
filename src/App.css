@@ -75,6 +75,7 @@ ul {
   z-index: 1000;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
+
 .nav-container {
     display: flex;
     justify-content: space-between;
@@ -89,8 +90,8 @@ ul {
 }
 
 .crest-img {
-    width: 50px;
-    height: 50px;
+    width: 170px;
+    height: 200px;
     object-fit: contain;
 }
 
@@ -125,15 +126,18 @@ ul {
 /* --- Hero Section --- */
 .hero {
     position: relative;
-    height: 75vh;
-    background: url('./assets/hero.jpg') no-repeat center center/cover;
-    background-color: #1e293b;
+    min-height: 85vh;
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: #0f172a;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    overflow: hidden;
     text-align: center;
     color: #ffffff;
-    background-attachment: fixed;
 }
 
 .hero-overlay {
@@ -142,115 +146,278 @@ ul {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85));
+    background: linear-gradient(
+        180deg,
+        rgba(15, 23, 42, 0.6) 0%,
+        rgba(15, 23, 42, 0.85) 100%
+    );
+    z-index: 1;
 }
 
 .hero-content {
     position: relative;
-    z-index: 1;
-    max-width: 800px;
-    padding: 0 20px;
+    z-index: 2;
+    text-align: center;
+    max-width: 900px;
+    padding: 0 24px;
 }
 
 .hero-content h2 {
     font-size: 2.8rem;
-    font-weight: 700;
-    margin-bottom: 15px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
 .hero-content .motto {
-    font-size: 1.3rem;
-    font-style: italic;
-    color: #bae6fd;
-    margin-bottom: 25px;
+    font-size: 1.25rem;
+    color: #cbd5e1;
+    font-weight: 500;
+    margin-bottom: 32px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .btn {
     display: inline-block;
-    background-color: #0284c7;
+    padding: 13px 32px;
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
     color: #ffffff;
-    padding: 12px 28px;
-    border-radius: 6px;
+    text-decoration: none;
+    font-size: 1rem;
     font-weight: 600;
-    transition: background 0.2s ease, transform 0.1s ease;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(2, 132, 199, 0.35);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .btn:hover {
-    background-color: #0369a1;
-    transform: translateY(-2px);
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(2, 132, 199, 0.45);
 }
 
-/* --- Vision & Mission Cards --- */
+/* --- About Section Base --- */
+.about-grid {
+    display: flex;
+    justify-content: center;
+}
+
+.about-text {
+    max-width: 900px;
+    width: 100%;
+}
+
 .about-text > p {
     font-size: 1.1rem;
-    text-align: center;
-    max-width: 850px;
-    margin: 0 auto 35px;
+    line-height: 1.8;
     color: #475569;
+    text-align: center;
+    margin-bottom: 48px;
 }
 
 .vision-mission {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 28px;
 }
 
 .card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-left: 5px solid #0284c7;
-    padding: 25px;
-    border-radius: 8px;
+    background: #ffffff;
+    padding: 32px 28px;
+    border-radius: 16px;
+    border: 1px solid #edf2f7;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.vision-mission .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, #2563eb, #38bdf8);
 }
 
 .card h3 {
-    color: #0f172a;
-    margin-bottom: 10px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 14px;
+}
+
+.card p {
+    font-size: 0.98rem;
+    line-height: 1.7;
+    color: #64748b;
+    margin: 0;
 }
 
 /* --- Principal Section --- */
-.principal-container {
+.principal-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 48px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
     display: flex;
     align-items: center;
-    gap: 50px;
-    flex-wrap: wrap;
+    gap: 48px;
 }
 
 .principal-img-box {
-    flex: 1;
-    min-width: 250px;
-    text-align: center;
+    flex-shrink: 0;
 }
 
 .principal-img {
     width: 260px;
-    height: 320px;
+    height: 330px;
     object-fit: cover;
-    border-radius: 12px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .principal-text {
-    flex: 2;
-    min-width: 300px;
+    flex: 1;
 }
 
-.principal-text p {
-    font-size: 1.05rem;
-    color: #475569;
+.principal-header {
     margin-bottom: 20px;
-    line-height: 1.8;
+}
+
+.principal-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 10px 0;
+    text-align: left;
+}
+
+.title-bar {
+    width: 60px;
+    height: 4px;
+    background: #2563eb;
+    border-radius: 4px;
+}
+
+.principal-message {
+    font-size: 1.05rem;
+    line-height: 1.85;
+    color: #475569;
+    margin-bottom: 24px;
+    font-style: italic;
+}
+
+.principal-name {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
 }
 
 .principal-name h4 {
-    color: #0f172a;
-    font-size: 1.1rem;
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e293b;
 }
 
 .principal-name span {
-    color: #64748b;
     font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* --- School Anthem Section --- */
+.anthem-section {
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    text-align: center;
+}
+
+.anthem-card {
+    max-width: 750px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+}
+
+.anthem-lyrics {
+    font-size: 1.1rem;
+    line-height: 2.2;
+    color: #334155;
+    font-weight: 500;
+    margin-bottom: 30px;
+}
+
+.anthem-audio-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.anthem-audio-box p {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0284c7;
+}
+
+.anthem-audio-box audio {
+    width: 100%;
+    max-width: 400px;
+    outline: none;
+}
+
+.lyrics-wrapper {
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out;
+    position: relative;
+}
+
+.lyrics-wrapper.collapsed {
+    max-height: 180px;
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+
+.lyrics-wrapper.expanded {
+    max-height: 1500px;
+    mask-image: none;
+    -webkit-mask-image: none;
+}
+
+.see-more-btn {
+    margin-top: 15px;
+    background: transparent;
+    border: 1px solid #aa3bff;
+    color: #aa3bff;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.see-more-btn:hover {
+    background: #aa3bff;
+    color: #ffffff;
 }
 
 /* --- Notices Grid --- */
@@ -262,15 +429,16 @@ ul {
 
 .notice-card {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #edf2f7;
     padding: 25px;
     border-radius: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .notice-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .badge {
@@ -336,6 +504,28 @@ footer {
 }
 
 /* --- Mobile Responsiveness --- */
+@media (max-width: 900px) {
+    .principal-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 32px 20px;
+        gap: 28px;
+    }
+
+    .principal-title {
+        text-align: center;
+    }
+
+    .title-bar {
+        margin: 0 auto;
+    }
+
+    .principal-img {
+        width: 200px;
+        height: 250px;
+    }
+}
+
 @media (max-width: 768px) {
     .nav-container {
         flex-direction: column;
@@ -353,531 +543,39 @@ footer {
         font-size: 1.9rem;
     }
 
-    .principal-container {
-        flex-direction: column;
-        text-align: center;
+    .hero-content .motto {
+        font-size: 1rem;
+        margin-bottom: 24px;
     }
 
-    .text-left {
-        text-align: center;
+    .hero-content .btn {
+        padding: 11px 26px;
+        font-size: 0.9rem;
     }
 
-    .text-left::after {
-        margin: 10px auto 0;
+    .section {
+        padding: 60px 16px;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+    }
+
+    .vision-mission {
+        grid-template-columns: 1fr;
     }
 }
 
-.crest-img{
-    width: 170px;
-    height: 200px;
-}
-/* --- Modern UI Upgrades --- */
-.navbar {
-  backdrop-filter: blur(12px);
-  background-color: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.hero {
-  background-attachment: fixed; /* Parallax effect eka */
-}
-
-.hero-content h2 {
-  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-  letter-spacing: -0.5px;
-}
-
-.card, .notice-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
-  border: 1px solid #edf2f7;
-}
-
-/* Mouse eka uda thiyaddi lassanata ussana hover effect eka */
-.card:hover, .notice-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.btn {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
-}
-
-.btn:hover {
-  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
-  transform: translateY(-2px);
-}
-/* --- School Anthem Section --- */
-.anthem-section {
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
-  text-align: center;
-}
-
-.anthem-card {
-  max-width: 750px;
-  margin: 0 auto;
-  background: #ffffff;
-  padding: 40px 30px;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
-}
-
-.anthem-lyrics {
-  font-size: 1.1rem;
-  line-height: 2.2;
-  color: #334155;
-  font-weight: 500;
-  margin-bottom: 30px;
-}
-
-.anthem-audio-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding-top: 20px;
-  border-top: 1px dashed #cbd5e1;
-}
-
-.anthem-audio-box p {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #0284c7;
-}
-
-.anthem-audio-box audio {
-  width: 100%;
-  max-width: 400px;
-  outline: none;
-}
-
-/* Lyrics collapse / expand transition */
-.lyrics-wrapper {
-  overflow: hidden;
-  transition: max-height 0.4s ease-in-out;
-  position: relative;
-}
-
-.lyrics-wrapper.collapsed {
-  max-height: 180px; /*muladi lines poddk pennnanna*/
-  
-  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-}
-
-.lyrics-wrapper.expanded {
-  max-height: 1500px; /* Click karama sampurna lyrics pennanawa */
-  mask-image: none;
-  -webkit-mask-image: none;
-}
-
-/* See More Button styling */
-.see-more-btn {
-  margin-top: 15px;
-  background: transparent;
-  border: 1px solid var(--accent, #aa3bff);
-  color: var(--accent, #aa3bff);
-  padding: 8px 18px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.see-more-btn:hover {
-  background: var(--accent, #aa3bff);
-  color: #ffffff;
-}
-
-/* Print / Download PDF Rules */
+/* --- Print Styles --- */
 @media print {
-  /* Navbar, search form, footer, and buttons hide wenawa */
-  nav,
-  header,
-  footer,
-  .no-print,
-  button,
-  form,
-  input,
-  select {
-    display: none !important;
-  }
+    nav, header, footer, .no-print, button, form, input, select {
+        display: none !important;
+    }
 
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  #printable-report {
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 15mm !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-  }
-
-  /* Screen eke hide wela print eke witharak open wenna */
-  .print-only {
-    display: flex !important;
-  }
-
-  table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-  }
-
-  th, td {
-    border-bottom: 1px solid #000000 !important;
-    padding: 8px !important;
-  }
-}
-/* Hero Section Container */
-.hero {
-  position: relative;
-  min-height: 85vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #0f172a;
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  overflow: hidden;
-}
-
-/* Dark Gradient Overlay (Photo eka mathin watena shadow eka - text eka highlight wenna) */
-.hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    180deg,
-    rgba(15, 23, 42, 0.6) 0%,
-    rgba(15, 23, 42, 0.85) 100%
-  );
-  z-index: 1;
-}
-
-/* Hero Content Area */
-.hero-content {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  max-width: 900px;
-  padding: 0 24px;
-  animation: fadeInHero 0.8s ease-out forwards;
-}
-
-/* Hero Main Title */
-.hero-content h2 {
-  font-size: 2.8rem;
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1.25;
-  margin-bottom: 16px;
-  letter-spacing: -0.5px;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
-}
-
-/* Motto / Subtitle */
-.hero-content .motto {
-  font-size: 1.25rem;
-  color: #cbd5e1;
-  font-weight: 500;
-  margin-bottom: 32px;
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* "තවත් විස්තර" Call to Action Button */
-.hero-content .btn {
-  display: inline-block;
-  padding: 13px 32px;
-  background: linear-gradient(135deg, #0284c7, #0369a1);
-  color: #ffffff;
-  text-decoration: none;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 50px;
-  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.35);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.hero-content .btn:hover {
-  background: linear-gradient(135deg, #0369a1, #075985);
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.45);
-}
-
-.hero-content .btn:active {
-  transform: translateY(-1px);
-}
-
-/* Smooth Fade-in Animation */
-@keyframes fadeInHero {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Mobile Screens walata Responsive */
-@media (max-width: 768px) {
-  .hero {
-    min-height: 70vh;
-  }
-
-  .hero-content h2 {
-    font-size: 1.85rem;
-  }
-
-  .hero-content .motto {
-    font-size: 1rem;
-    margin-bottom: 24px;
-  }
-
-  .hero-content .btn {
-    padding: 11px 26px;
-    font-size: 0.9rem;
-  }
-}
-/* About Section Base */
-.section {
-  padding: 80px 20px;
-  background-color: #f8fafc;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* Section Title with Accent Line */
-.section-title {
-  text-align: center;
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 40px;
-  position: relative;
-}
-
-.section-title::after {
-  content: '';
-  display: block;
-  width: 60px;
-  height: 4px;
-  background: #2563eb;
-  margin: 12px auto 0;
-  border-radius: 4px;
-}
-
-/* About Grid & Description */
-.about-grid {
-  display: flex;
-  justify-content: center;
-}
-
-.about-text {
-  max-width: 900px;
-  width: 100%;
-}
-
-.about-text > p {
-  font-size: 1.1rem;
-  line-height: 1.8;
-  color: #475569;
-  text-align: center;
-  margin-bottom: 48px;
-}
-
-/* Vision & Mission Cards Grid */
-.vision-mission {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 28px;
-}
-
-/* Individual Card Styling */
-.vision-mission .card {
-  background: #ffffff;
-  padding: 32px 28px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Top Accent Line on Cards */
-.vision-mission .card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 5px;
-  background: linear-gradient(90deg, #2563eb, #38bdf8);
-}
-
-.vision-mission .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-}
-
-.vision-mission .card h3 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.vision-mission .card p {
-  font-size: 0.98rem;
-  line-height: 1.7;
-  color: #64748b;
-  margin: 0;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .section {
-    padding: 60px 16px;
-  }
-
-  .section-title {
-    font-size: 1.8rem;
-  }
-
-  .about-text > p {
-    font-size: 1rem;
-    margin-bottom: 32px;
-  }
-
-  .vision-mission {
-    grid-template-columns: 1fr;
-  }
-}
-/* Background Light */
-.bg-light {
-  background-color: #f1f5f9;
-}
-
-/* Principal Card Wrapper */
-.principal-card {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 48px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  gap: 48px;
-}
-
-/* Image Box */
-.principal-img-box {
-  flex-shrink: 0;
-}
-
-.principal-img {
-  width: 260px;
-  height: 330px;
-  object-fit: cover;
-  border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-/* Content Area */
-.principal-text {
-  flex: 1;
-}
-
-.principal-header {
-  margin-bottom: 20px;
-}
-
-.principal-title {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 10px 0;
-  text-align: left;
-}
-
-.title-bar {
-  width: 60px;
-  height: 4px;
-  background: #2563eb;
-  border-radius: 4px;
-}
-
-.principal-message {
-  font-size: 1.05rem;
-  line-height: 1.85;
-  color: #475569;
-  margin-bottom: 24px;
-  font-style: italic;
-  position: relative;
-}
-
-/* Name & Designation */
-.principal-name {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 16px;
-}
-
-.principal-name h4 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.principal-name span {
-  font-size: 0.9rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-/* Responsive (Mobile/Tablet) */
-@media (max-width: 900px) {
-  .principal-card {
-    flex-direction: column;
-    text-align: center;
-    padding: 32px 20px;
-    gap: 28px;
-  }
-
-  .principal-title {
-    text-align: center;
-  }
-
-  .title-bar {
-    margin: 0 auto;
-  }
-
-  .principal-img {
-    width: 200px;
-    height: 250px;
-  }
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 }

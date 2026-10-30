@@ -118,35 +118,99 @@ const TeacherUploadPortal = () => {
     return stats;
   };
 
-  // Upload: Handle file select
+  // Inline Cell Editing handler for Preview Table
+  const handleCellEdit = (rowIndex, columnKey, newValue) => {
+    const updatedData = [...parsedData];
+    updatedData[rowIndex] = {
+      ...updatedData[rowIndex],
+      [columnKey]: newValue
+    };
+    setParsedData(updatedData);
+    setUploadAnalytics(calculateAnalytics(updatedData));
+  };
+
+  // Upload: Handle file select with Strict Format, Structure & Blank Row Filtering
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setSelectedFile(file);
+    setSelectedFile(null);
+    setParsedData([]);
+    setUploadAnalytics({});
     setUploadStatus(null);
+
+    // 1. File Extension Validation (.xlsx, .xls, .csv)
+    const validExtensions = ['.xlsx', '.xls', '.csv'];
+    const fileNameLower = file.name.toLowerCase();
+    const hasValidExt = validExtensions.some(ext => fileNameLower.endsWith(ext));
+
+    if (!hasValidExt) {
+      alert('කරුණාකර වලංගු Excel (.xlsx, .xls) හෝ .csv file එකක් පමණක් තෝරන්න!');
+      e.target.value = '';
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
         const bstr = evt.target.result;
-        const workbook = XLSX.read(bstr, { type: 'binary' });
+        const workbook = XLSX.read(bstr, { type: 'binary', cellDates: true });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
-        setParsedData(jsonData);
-        setUploadAnalytics(calculateAnalytics(jsonData));
+        const rawJsonData = XLSX.utils.sheet_to_json(sheet);
+
+        if (!rawJsonData || rawJsonData.length === 0) {
+          alert('මෙම file එකේ දත්ත කිසිවක් නැත (Empty file)!');
+          e.target.value = '';
+          return;
+        }
+
+        // Structure Check
+        const firstRowKeys = Object.keys(rawJsonData[0]).map(k => k.toLowerCase().replace(/[^a-z0-9]/g, ''));
+        const hasIndex = firstRowKeys.some(k => ['indexno', 'index', 'admissionno'].includes(k));
+        const hasName = firstRowKeys.some(k => ['studentname', 'name'].includes(k));
+
+        if (!hasIndex || !hasName) {
+          alert('වලංගු නොවන Sheet ආකෘතියකි (Invalid Format)! \n\nFile එකේ "Index No" (හෝ Admission No) සහ "Student Name" තීරු අනිවාර්යයෙන්ම තිබිය යුතුය.');
+          e.target.value = '';
+          return;
+        }
+
+        // Blank Row Filter
+        const cleanedData = rawJsonData.filter((row) => {
+          const idx = row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index;
+          const name = row.StudentName || row.Name;
+          return (
+            idx !== undefined &&
+            String(idx).trim() !== '' &&
+            name !== undefined &&
+            String(name).trim() !== ''
+          );
+        });
+
+        if (cleanedData.length === 0) {
+          alert('මෙම file එකේ වලංගු ශිෂ්‍ය දත්ත කිසිවක් හඳුනාගත නොහැකි විය!');
+          e.target.value = '';
+          return;
+        }
+
+        setSelectedFile(file);
+        setParsedData(cleanedData);
+        setUploadAnalytics(calculateAnalytics(cleanedData));
+
       } catch (err) {
         console.error('File parsing error:', err);
+        alert('File එක කියවීමේදී දෝෂයක් සිදුවිය. Sheet එක නිවැරදිදැයි පරීක්ෂා කරන්න.');
+        e.target.value = '';
       }
     };
     reader.readAsBinaryString(file);
   };
 
-  // Upload to Sanity
+  // Upload to Sanity (Exports the edited preview data back to clean XLSX)
   const handleUploadToSanity = async () => {
-    if (!selectedFile) {
-      alert('කරුණාකර Excel (.xlsx / .csv) file එකක් තෝරන්න!');
+    if (!parsedData || parsedData.length === 0) {
+      alert('Upload කිරීමට දත්ත කිසිවක් නොමැත!');
       return;
     }
 
@@ -154,11 +218,18 @@ const TeacherUploadPortal = () => {
     setUploadStatus(null);
 
     try {
-      const safeContentType = selectedFile.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      // Create updated XLSX workbook from edited table state
+      const worksheet = XLSX.utils.json_to_sheet(parsedData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Results');
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const finalBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-      const fileAsset = await client.assets.upload('file', selectedFile, {
-        filename: selectedFile.name,
-        contentType: safeContentType,
+      const safeFileName = selectedFile ? selectedFile.name : `Results_${grade}_${classSection}_${term}.xlsx`;
+
+      const fileAsset = await client.assets.upload('file', finalBlob, {
+        filename: safeFileName,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
 
       const cleanGrade = grade.toLowerCase().replace(/\s+/g, '');
@@ -234,10 +305,21 @@ const TeacherUploadPortal = () => {
       const workbook = XLSX.read(arrayBuffer, { type: 'buffer' });
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const rawJsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      setReportRows(jsonData);
-      setReportAnalytics(calculateAnalytics(jsonData));
+      const cleanedReportData = rawJsonData.filter((row) => {
+        const idx = row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index;
+        const name = row.StudentName || row.Name;
+        return (
+          idx !== undefined &&
+          String(idx).trim() !== '' &&
+          name !== undefined &&
+          String(name).trim() !== ''
+        );
+      });
+
+      setReportRows(cleanedReportData);
+      setReportAnalytics(calculateAnalytics(cleanedReportData));
     } catch (err) {
       console.error('Class sheet fetch error:', err);
       setReportError('Data ලබාගැනීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න.');
@@ -411,7 +493,10 @@ const TeacherUploadPortal = () => {
           {parsedData.length > 0 && (
             <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', backgroundColor: '#f8fafc', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#1e293b' }}>Preview: ළමුන් {parsedData.length} දෙනෙකු හඳුනා ගැනිණි</span>
+                <div>
+                  <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#1e293b' }}>Preview: ළමුන් {parsedData.length} දෙනෙකු හඳුනා ගැනිණි</span>
+                  <p style={{ margin: '3px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>💡 වැරදි ඇති කොටු මෙතැනදීම ක්ලික් කර නිවැරදි කළ හැක</p>
+                </div>
                 <button
                   onClick={handleUploadToSanity}
                   disabled={isUploading}
@@ -421,21 +506,51 @@ const TeacherUploadPortal = () => {
                 </button>
               </div>
 
-              <div style={{ maxHeight: '200px', overflowY: 'auto', marginTop: '12px' }}>
+              {/* Editable Preview Table */}
+              <div style={{ maxHeight: '280px', overflowY: 'auto', marginTop: '12px', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', backgroundColor: '#fff' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'left' }}>
+                    <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'left', position: 'sticky', top: 0, zIndex: 1 }}>
                       {Object.keys(parsedData[0]).map((col) => (
-                        <th key={col} style={{ padding: '8px 10px', border: '1px solid #e2e8f0' }}>{col}</th>
+                        <th key={col} style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b' }}>{col}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {parsedData.slice(0, 5).map((row, idx) => (
-                      <tr key={idx}>
-                        {Object.values(row).map((val, i) => (
-                          <td key={i} style={{ padding: '8px 10px', border: '1px solid #e2e8f0' }}>{String(val)}</td>
-                        ))}
+                    {parsedData.map((row, rowIdx) => (
+                      <tr key={rowIdx}>
+                        {Object.keys(parsedData[0]).map((col) => {
+                          const val = String(row[col] ?? '');
+                          const isDobField = col.toLowerCase().includes('dob') || col.toLowerCase().includes('birth');
+                          // DOB validation: YYYY-MM-DD nathnam (e.g. 39716 wage number ekak nam) red alert
+                          const isInvalidDob = isDobField && (!val.includes('-') || val.length < 8);
+
+                          return (
+                            <td key={col} style={{ padding: '4px', border: '1px solid #e2e8f0' }}>
+                              <input
+                                type="text"
+                                value={val}
+                                onChange={(e) => handleCellEdit(rowIdx, col, e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  padding: '6px 8px',
+                                  borderRadius: '6px',
+                                  fontSize: '0.82rem',
+                                  border: isInvalidDob ? '2px solid #ef4444' : '1px solid transparent',
+                                  backgroundColor: isInvalidDob ? '#fef2f2' : 'transparent',
+                                  color: isInvalidDob ? '#dc2626' : '#1e293b',
+                                  fontWeight: isInvalidDob ? '700' : 'normal',
+                                  boxSizing: 'border-box',
+                                  outline: 'none',
+                                  transition: 'border 0.2s'
+                                }}
+                                onFocus={(e) => e.target.style.border = isInvalidDob ? '2px solid #ef4444' : '1px solid #2563eb'}
+                                onBlur={(e) => e.target.style.border = isInvalidDob ? '2px solid #ef4444' : '1px solid transparent'}
+                                title={isInvalidDob ? 'වැරදි DOB ආකෘතියකි! කරුණාකර YYYY-MM-DD ආකෘතියෙන් සකසන්න[cite: 1].' : ''}
+                              />
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>
@@ -539,15 +654,13 @@ const TeacherUploadPortal = () => {
                       </tr>
                     ))}
 
-                    {/* Integrated Analytics Rows (Cleanly Aligned with colSpan={2}) */}
+                    {/* Integrated Analytics Rows */}
                     {Object.keys(reportAnalytics).length > 0 && (
                       <>
-                        {/* Divider Bar */}
                         <tr style={{ height: '14px', backgroundColor: '#f1f5f9' }}>
                           <td colSpan={2 + reportSubjectColumns.length} style={{ border: '1px solid #cbd5e1', padding: 0 }}></td>
                         </tr>
 
-                        {/* 40ට අඩු */}
                         <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
                           <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#dc2626' }}>
                             40ට අඩු
@@ -559,7 +672,6 @@ const TeacherUploadPortal = () => {
                           ))}
                         </tr>
 
-                        {/* 40ට වැඩි */}
                         <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
                           <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#16a34a' }}>
                             40ට වැඩි
@@ -571,7 +683,6 @@ const TeacherUploadPortal = () => {
                           ))}
                         </tr>
 
-                        {/* 40ට අඩු % */}
                         <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#fef2f2' }}>
                           <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#dc2626' }}>
                             40ට අඩු %
@@ -583,7 +694,6 @@ const TeacherUploadPortal = () => {
                           ))}
                         </tr>
 
-                        {/* 40ට වැඩි % */}
                         <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#f0fdf4' }}>
                           <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#16a34a' }}>
                             40ට වැඩි %
@@ -595,7 +705,6 @@ const TeacherUploadPortal = () => {
                           ))}
                         </tr>
 
-                        {/* උපරිම ලකුණු */}
                         <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
                           <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#1e293b' }}>
                             උපරිම ලකුණු
@@ -607,7 +716,6 @@ const TeacherUploadPortal = () => {
                           ))}
                         </tr>
 
-                        {/* අවම ලකුණු */}
                         <tr>
                           <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#1e293b' }}>
                             අවම ලකුණු
