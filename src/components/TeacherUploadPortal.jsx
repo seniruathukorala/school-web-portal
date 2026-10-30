@@ -373,7 +373,6 @@ const TeacherUploadPortal = () => {
               const prevTerm = termOrder[i];
               const prevData = await fetchSheetData(prevTerm);
               if (prevData && prevData.length > 0) {
-                // DOB ekath samaga copy wenawa
                 setTableRows(mapJsonToTableRows(prevData, true));
                 prevFound = true;
                 break;
@@ -448,7 +447,7 @@ const TeacherUploadPortal = () => {
         const item = {
           'Index No': row.indexNo.trim(),
           'Student Name': row.name.trim(),
-          'DOB': row.dob.trim() // DOB field eka save wenawa
+          'DOB': row.dob.trim()
         };
 
         coreList.forEach(sub => {
@@ -853,7 +852,7 @@ const TeacherUploadPortal = () => {
                   <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #cbd5e1', textAlign: 'left' }}>
                     <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b', width: '85px' }}>ඇතුළත් අංකය</th>
                     <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', minWidth: '140px', color: '#1e293b' }}>නම</th>
-                    <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', width: '115px', color: '#1e293b' }}>උපන් දිනය</th>
+                    <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', width: '135px', color: '#1e293b' }}>උපන් දිනය</th>
                     {coreList.map((sub) => (
                       <th key={sub} style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#1e293b', textAlign: 'center', minWidth: '65px' }}>{sub}</th>
                     ))}
@@ -899,15 +898,15 @@ const TeacherUploadPortal = () => {
                           <span style={{ fontWeight: '600', paddingLeft: '4px' }}>{row.name}</span>
                         )}
                       </td>
-                      {/* DOB Column */}
+                      
+                      {/* Native Calendar Picker */}
                       <td style={{ padding: '4px', border: '1px solid #e2e8f0' }}>
                         {isEditing ? (
                           <input
-                            type="text"
-                            value={row.dob}
+                            type="date"
+                            value={row.dob || ''}
                             onChange={(e) => handleFieldChange(row.id, 'dob', e.target.value)}
-                            placeholder="YYYY-MM-DD"
-                            style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                            style={{ width: '100%', padding: '5px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', boxSizing: 'border-box', cursor: 'pointer', backgroundColor: '#ffffff' }}
                           />
                         ) : (
                           <span style={{ fontSize: '0.82rem', paddingLeft: '4px' }}>{row.dob || '-'}</span>
@@ -1120,7 +1119,6 @@ const TeacherUploadPortal = () => {
                     {Object.keys(reportAnalytics).length > 0 && (
                       <>
                         <tr style={{ height: '14px', backgroundColor: '#f1f5f9' }}>
-                          {/* 3 leading columns (Index, Name, DOB) + Subjects + 3 trailing columns (Total, Avg, Rank) */}
                           <td colSpan={3 + reportSubjectColumns.length + 3} style={{ border: '1px solid #cbd5e1', padding: 0 }}></td>
                         </tr>
 
