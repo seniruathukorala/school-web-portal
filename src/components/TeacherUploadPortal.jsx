@@ -111,8 +111,9 @@ const TeacherUploadPortal = () => {
 
     const ignoredKeys = [
       'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
-      'grade', 'term', 'section', 'class', 'classsection', 'dob', 
-      'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place'
+      'dob', 'dateofbirth', 'birthday', 'upandinaya',
+      'grade', 'term', 'section', 'class', 'classsection', 
+      'rownum', 'total', 'average', 'rank', 'place'
     ];
 
     const subjectKeys = Object.keys(rows[0]).filter(
@@ -160,7 +161,6 @@ const TeacherUploadPortal = () => {
     return stats;
   };
 
-  // Total, Average saha Class Rank auto calculate karana helper eka
   const enrichRowsWithRankAndStats = (rows, subjectCols) => {
     if (!rows || rows.length === 0) return [];
 
@@ -179,7 +179,7 @@ const TeacherUploadPortal = () => {
               hasValidMarks = true;
             }
           } else {
-            hasValidMarks = true; // Absent unath exam count wenawa
+            hasValidMarks = true;
           }
         }
       });
@@ -194,7 +194,6 @@ const TeacherUploadPortal = () => {
       };
     });
 
-    // Rank calculate karanawa Total descending order ekata
     const sortedTotals = [...new Set(calculatedRows.map(r => r.__numericTotal))].sort((a, b) => b - a);
 
     return calculatedRows.map((row) => {
@@ -213,6 +212,7 @@ const TeacherUploadPortal = () => {
     id: Date.now() + Math.random(),
     indexNo: '',
     name: '',
+    dob: '',
     coreMarks: {},
     baskets: {
       b1: { sub: '', mark: '' },
@@ -285,6 +285,7 @@ const TeacherUploadPortal = () => {
     return jsonData.map((row) => {
       let idx = '';
       let name = '';
+      let dob = '';
 
       Object.keys(row).forEach((k) => {
         const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -293,6 +294,9 @@ const TeacherUploadPortal = () => {
         }
         if (['studentname', 'name', 'nama'].includes(cleanK)) {
           name = row[k];
+        }
+        if (['dob', 'dateofbirth', 'birthday', 'upandinaya'].includes(cleanK)) {
+          dob = row[k];
         }
       });
 
@@ -306,8 +310,9 @@ const TeacherUploadPortal = () => {
       const blacklistedKeys = [
         'studentname', 'name', 'nama',
         'indexno', 'index', 'admissionno', 'athulathankaya',
+        'dob', 'dateofbirth', 'birthday', 'upandinaya',
         'grade', 'term', 'section', 'class', 'classsection', 
-        'dob', 'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place'
+        'rownum', 'total', 'average', 'rank', 'place'
       ];
 
       Object.keys(row).forEach((col) => {
@@ -335,6 +340,7 @@ const TeacherUploadPortal = () => {
         id: idx || Date.now() + Math.random(),
         indexNo: String(idx ?? '').trim(),
         name: String(name ?? '').trim(),
+        dob: String(dob ?? '').trim(),
         coreMarks,
         baskets
       };
@@ -367,6 +373,7 @@ const TeacherUploadPortal = () => {
               const prevTerm = termOrder[i];
               const prevData = await fetchSheetData(prevTerm);
               if (prevData && prevData.length > 0) {
+                // DOB ekath samaga copy wenawa
                 setTableRows(mapJsonToTableRows(prevData, true));
                 prevFound = true;
                 break;
@@ -440,7 +447,8 @@ const TeacherUploadPortal = () => {
       const flatData = validRows.map(row => {
         const item = {
           'Index No': row.indexNo.trim(),
-          'Student Name': row.name.trim()
+          'Student Name': row.name.trim(),
+          'DOB': row.dob.trim() // DOB field eka save wenawa
         };
 
         coreList.forEach(sub => {
@@ -601,11 +609,11 @@ const TeacherUploadPortal = () => {
         const sampleKeys = Object.keys(cleanedReportData[0]);
         const subjectCols = sampleKeys.filter(k => ![
           'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
-          'grade', 'term', 'section', 'class', 'classsection', 'dob', 
-          'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place'
+          'dob', 'dateofbirth', 'birthday', 'upandinaya',
+          'grade', 'term', 'section', 'class', 'classsection', 
+          'rownum', 'total', 'average', 'rank', 'place'
         ].includes(k.toLowerCase().replace(/[^a-z0-9]/g, '')));
 
-        // Total, Average, saha Rank enrich karanawa
         const enrichedData = enrichRowsWithRankAndStats(cleanedReportData, subjectCols);
 
         setReportRows(enrichedData);
@@ -633,8 +641,9 @@ const TeacherUploadPortal = () => {
   const reportSubjectColumns = reportRows.length > 0
     ? Object.keys(reportRows[0]).filter(k => ![
         'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
-        'grade', 'term', 'section', 'class', 'classsection', 'dob', 
-        'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place',
+        'dob', 'dateofbirth', 'birthday', 'upandinaya',
+        'grade', 'term', 'section', 'class', 'classsection', 
+        'rownum', 'total', 'average', 'rank', 'place',
         '__total', '__numericTotal', '__avg', '__rank'
       ].includes(k.toLowerCase().replace(/[^a-z0-9]/g, '')))
     : [];
@@ -677,7 +686,7 @@ const TeacherUploadPortal = () => {
 
   // --- VIEW 2: Dashboard with Tabs ---
   return (
-    <div style={{ maxWidth: '1250px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '16px', padding: '32px', boxShadow: '0 10px 25px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0', fontFamily: 'Segoe UI, Roboto, sans-serif' }}>
+    <div style={{ maxWidth: '1300px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '16px', padding: '32px', boxShadow: '0 10px 25px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0', fontFamily: 'Segoe UI, Roboto, sans-serif' }}>
       
       <style>{`
         @media print {
@@ -791,7 +800,7 @@ const TeacherUploadPortal = () => {
               <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
                 {hasExistingData 
                   ? (isEditing ? '✏️ Edit Mode: අවශ්‍ය වෙනස්කම් සිදුකර "Save All Results" ඔබන්න.' : '🔒 View Mode: දත්ත සංස්කරණය කිරීමට "Edit Marks" ඔබන්න.')
-                  : '✨ නව ලකුණු ඇතුළත් කිරීම (කලින් Term එකේ නම් හා අංක ස්වයංක්‍රීයව එක්විය හැක).'}
+                  : '✨ නව ලකුණු ඇතුළත් කිරීම (කලින් Term එකේ නම්, අංක හා උපන් දින ස්වයංක්‍රීයව එක්විය හැක).'}
               </p>
             </div>
 
@@ -842,8 +851,9 @@ const TeacherUploadPortal = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #cbd5e1', textAlign: 'left' }}>
-                    <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b', width: '90px' }}>ඇතුළත් අංකය</th>
-                    <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', minWidth: '150px', color: '#1e293b' }}>නම</th>
+                    <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b', width: '85px' }}>ඇතුළත් අංකය</th>
+                    <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', minWidth: '140px', color: '#1e293b' }}>නම</th>
+                    <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', width: '115px', color: '#1e293b' }}>උපන් දිනය</th>
                     {coreList.map((sub) => (
                       <th key={sub} style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#1e293b', textAlign: 'center', minWidth: '65px' }}>{sub}</th>
                     ))}
@@ -887,6 +897,20 @@ const TeacherUploadPortal = () => {
                           />
                         ) : (
                           <span style={{ fontWeight: '600', paddingLeft: '4px' }}>{row.name}</span>
+                        )}
+                      </td>
+                      {/* DOB Column */}
+                      <td style={{ padding: '4px', border: '1px solid #e2e8f0' }}>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={row.dob}
+                            onChange={(e) => handleFieldChange(row.id, 'dob', e.target.value)}
+                            placeholder="YYYY-MM-DD"
+                            style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '0.82rem', paddingLeft: '4px' }}>{row.dob || '-'}</span>
                         )}
                       </td>
 
@@ -993,7 +1017,7 @@ const TeacherUploadPortal = () => {
         </div>
       )}
 
-      {/* TAB 2: CLASS MARK SHEET (REPORT VIEWER WITH TOTAL, AVERAGE & RANK) */}
+      {/* TAB 2: CLASS MARK SHEET (REPORT VIEWER WITH DOB, TOTAL, AVERAGE & RANK) */}
       {activeTab === 'report' && (
         <div>
           <div className="no-print" style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
@@ -1052,15 +1076,15 @@ const TeacherUploadPortal = () => {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'center' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
-                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b', width: '90px' }}>ඇතුළත් අංකය</th>
-                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', textAlign: 'left', minWidth: '150px', color: '#1e293b' }}>නම</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b', width: '85px' }}>ඇතුළත් අංකය</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', textAlign: 'left', minWidth: '140px', color: '#1e293b' }}>නම</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', width: '95px', color: '#1e293b' }}>උපන් දිනය</th>
                       {reportSubjectColumns.map((col) => (
                         <th key={col} style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b' }}>{col}</th>
                       ))}
-                      {/* Added Final Columns */}
-                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '70px', fontWeight: '700' }}>එකතුව</th>
-                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '70px', fontWeight: '700' }}>සාමාන්‍යය</th>
-                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1d4ed8', backgroundColor: '#eff6ff', width: '65px', fontWeight: '800' }}>ස්ථානය</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '65px', fontWeight: '700' }}>එකතුව</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '65px', fontWeight: '700' }}>සාමාන්‍යය</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1d4ed8', backgroundColor: '#eff6ff', width: '60px', fontWeight: '800' }}>ස්ථානය</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1072,12 +1096,14 @@ const TeacherUploadPortal = () => {
                         <td style={{ padding: '8px 6px', border: '1px solid #e2e8f0', textAlign: 'left', fontWeight: '600' }}>
                           {row['Student Name'] || row.StudentName || row.Name || row.nama || '-'}
                         </td>
+                        <td style={{ padding: '8px 6px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
+                          {row['DOB'] || row.dob || row.dateofbirth || row.birthday || '-'}
+                        </td>
                         {reportSubjectColumns.map((col) => (
                           <td key={col} style={{ padding: '8px 6px', border: '1px solid #e2e8f0' }}>
                             {String(row[col] ?? '-')}
                           </td>
                         ))}
-                        {/* Rendered Total, Average, and Rank */}
                         <td style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '700', backgroundColor: '#f8fafc' }}>
                           {row.__total}
                         </td>
@@ -1094,11 +1120,12 @@ const TeacherUploadPortal = () => {
                     {Object.keys(reportAnalytics).length > 0 && (
                       <>
                         <tr style={{ height: '14px', backgroundColor: '#f1f5f9' }}>
-                          <td colSpan={2 + reportSubjectColumns.length + 3} style={{ border: '1px solid #cbd5e1', padding: 0 }}></td>
+                          {/* 3 leading columns (Index, Name, DOB) + Subjects + 3 trailing columns (Total, Avg, Rank) */}
+                          <td colSpan={3 + reportSubjectColumns.length + 3} style={{ border: '1px solid #cbd5e1', padding: 0 }}></td>
                         </tr>
 
                         <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#dc2626' }}>
+                          <td colSpan={3} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#dc2626' }}>
                             40ට අඩු
                           </td>
                           {reportSubjectColumns.map((c) => (
@@ -1110,7 +1137,7 @@ const TeacherUploadPortal = () => {
                         </tr>
 
                         <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#16a34a' }}>
+                          <td colSpan={3} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#16a34a' }}>
                             40ට වැඩි
                           </td>
                           {reportSubjectColumns.map((c) => (
@@ -1122,7 +1149,7 @@ const TeacherUploadPortal = () => {
                         </tr>
 
                         <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#fef2f2' }}>
-                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#dc2626' }}>
+                          <td colSpan={3} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#dc2626' }}>
                             40ට අඩු %
                           </td>
                           {reportSubjectColumns.map((c) => (
@@ -1134,7 +1161,7 @@ const TeacherUploadPortal = () => {
                         </tr>
 
                         <tr style={{ borderBottom: '1px solid #cbd5e1', backgroundColor: '#f0fdf4' }}>
-                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#16a34a' }}>
+                          <td colSpan={3} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#16a34a' }}>
                             40ට වැඩි %
                           </td>
                           {reportSubjectColumns.map((c) => (
@@ -1146,7 +1173,7 @@ const TeacherUploadPortal = () => {
                         </tr>
 
                         <tr style={{ borderBottom: '1px solid #cbd5e1' }}>
-                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#1e293b' }}>
+                          <td colSpan={3} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#1e293b' }}>
                             උපරිම ලකුණු
                           </td>
                           {reportSubjectColumns.map((c) => (
@@ -1158,7 +1185,7 @@ const TeacherUploadPortal = () => {
                         </tr>
 
                         <tr>
-                          <td colSpan={2} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#1e293b' }}>
+                          <td colSpan={3} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700', border: '1px solid #cbd5e1', color: '#1e293b' }}>
                             අවම ලකුණු
                           </td>
                           {reportSubjectColumns.map((c) => (
