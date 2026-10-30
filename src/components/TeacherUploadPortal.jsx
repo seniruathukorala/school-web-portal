@@ -1,27 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { client } from '../sanityClient';
 
 const TEACHER_ACCESS_KEY = "TAXILA@TEACHER2026";
+
+// Sri Lankan School Subject Structure Configuration
+const SUBJECT_CONFIG = {
+  junior: { // Grade 6 - 9
+    core: ['Sinhala', 'Buddhism', 'Mathematics', 'Science', 'English', 'History', 'Geography', 'Civics', 'PTS', 'Health'],
+    aesthetics: ['Art', 'Music', 'Dancing', 'Drama']
+  },
+  ol: { // Grade 10 - 11
+    core: ['Sinhala', 'Buddhism', 'Mathematics', 'Science', 'English', 'History'],
+    basket1: ['Commerce', 'Geography', 'Civics', 'Tamil', 'French'],
+    basket2: ['Art', 'Music', 'Dancing', 'Drama', 'English Lit', 'Sinhala Lit'],
+    basket3: ['ICT', 'Agriculture', 'Health', 'Home Science', 'Technical']
+  },
+  al: { // Grade 12 - 13
+    streams: {
+      maths: ['Combined Maths', 'Physics', 'Chemistry', 'ICT'],
+      bio: ['Biology', 'Chemistry', 'Physics', 'Agri'],
+      commerce: ['Accounting', 'Business Studies', 'Economics', 'ICT'],
+      arts: ['Sinhala', 'Political Science', 'Logic', 'Geography'],
+      tech: ['Engineering Tech', 'Bio-systems Tech', 'Science for Tech', 'ICT']
+    },
+    common: ['General English', 'GIT']
+  }
+};
 
 const TeacherUploadPortal = () => {
   const [passcode, setPasscode] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authError, setAuthError] = useState('');
 
-  // Active Tab state: 'upload' or 'report'
-  const [activeTab, setActiveTab] = useState('upload');
+  // Active Tab state: 'entry' or 'report'
+  const [activeTab, setActiveTab] = useState('entry');
 
   // Common Selection States
   const [year, setYear] = useState('2026');
   const [grade, setGrade] = useState('Grade 10');
   const [classSection, setClassSection] = useState('A');
   const [term, setTerm] = useState('Term 1');
+  const [alStream, setAlStream] = useState('maths');
 
-  // Upload States
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [parsedData, setParsedData] = useState([]);
-  const [uploadAnalytics, setUploadAnalytics] = useState({});
+  // Direct Entry & Edit States
+  const [tableRows, setTableRows] = useState([]);
+  const [isEditing, setIsEditing] = useState(true);
+  const [hasExistingData, setHasExistingData] = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState(null);
 
@@ -53,6 +79,24 @@ const TeacherUploadPortal = () => {
     fontSize: '0.95rem'
   };
 
+  // Grade category helper
+  const getGradeCategory = () => {
+    const num = parseInt(grade.replace(/\D/g, ''), 10);
+    if (num >= 6 && num <= 9) return 'junior';
+    if (num >= 10 && num <= 11) return 'ol';
+    if (num >= 12 && num <= 13) return 'al';
+    return 'ol';
+  };
+
+  const category = getGradeCategory();
+
+  const getActiveCoreSubjects = () => {
+    if (category === 'al') {
+      return [...(SUBJECT_CONFIG.al.streams[alStream] || []), ...SUBJECT_CONFIG.al.common];
+    }
+    return SUBJECT_CONFIG[category].core;
+  };
+
   const handleLogin = (e) => {
     e.preventDefault();
     if (passcode === TEACHER_ACCESS_KEY) {
@@ -63,7 +107,7 @@ const TeacherUploadPortal = () => {
     }
   };
 
-  // Helper: Analytics calculation logic
+  // Helper: Analytics calculation logic (Preserved exactly as your original code)
   const calculateAnalytics = (rows) => {
     if (!rows || rows.length === 0) return {};
 
@@ -118,99 +162,178 @@ const TeacherUploadPortal = () => {
     return stats;
   };
 
-  // Inline Cell Editing handler for Preview Table
-  const handleCellEdit = (rowIndex, columnKey, newValue) => {
-    const updatedData = [...parsedData];
-    updatedData[rowIndex] = {
-      ...updatedData[rowIndex],
-      [columnKey]: newValue
-    };
-    setParsedData(updatedData);
-    setUploadAnalytics(calculateAnalytics(updatedData));
+  const createBlankRow = () => ({
+    id: Date.now() + Math.random(),
+    indexNo: '',
+    name: '',
+    coreMarks: {},
+    baskets: {
+      b1: { sub: '', mark: '' },
+      b2: { sub: '', mark: '' },
+      b3: { sub: '', mark: '' }
+    }
+  });
+
+  // Fetch sheet from Sanity and parse rows helper
+  const fetchSheetData = async (targetTerm) => {
+    const query = `*[_type == "resultSheet" && year == $year && grade == $grade && classSection == $section && term == $targetTerm][0]{
+      title,
+      "fileUrl": file.asset->url
+    }`;
+    const resultDoc = await client.fetch(query, {
+      year,
+      grade,
+      section: classSection,
+      targetTerm
+    });
+
+    if (!resultDoc || !resultDoc.fileUrl) return null;
+
+    const response = await fetch(resultDoc.fileUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'buffer' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    return XLSX.utils.sheet_to_json(worksheet);
   };
 
-  // Upload: Handle file select with Strict Format, Structure & Blank Row Filtering
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // Convert raw JSON rows from XLSX to our table structure
+  const mapJsonToTableRows = (jsonData, isCopyingPrevTerm = false) => {
+    const coreList = getActiveCoreSubjects();
 
-    setSelectedFile(null);
-    setParsedData([]);
-    setUploadAnalytics({});
-    setUploadStatus(null);
+    return jsonData.map((row) => {
+      const idx = row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index || '';
+      const name = row.StudentName || row.Name || '';
+      const coreMarks = {};
+      const baskets = {
+        b1: { sub: '', mark: '' },
+        b2: { sub: '', mark: '' },
+        b3: { sub: '', mark: '' }
+      };
 
-    // 1. File Extension Validation (.xlsx, .xls, .csv)
-    const validExtensions = ['.xlsx', '.xls', '.csv'];
-    const fileNameLower = file.name.toLowerCase();
-    const hasValidExt = validExtensions.some(ext => fileNameLower.endsWith(ext));
+      const ignoredKeys = [
+        'studentname', 'name', 'indexno', 'index', 'admissionno', 
+        'grade', 'term', 'section', 'class', 'classsection', 'dob', 
+        'date of birth', 'birthday', '__rownum__', 'total', 'average', 'rank', 'place'
+      ];
 
-    if (!hasValidExt) {
-      alert('කරුණාකර වලංගු Excel (.xlsx, .xls) හෝ .csv file එකක් පමණක් තෝරන්න!');
-      e.target.value = '';
-      return;
-    }
+      Object.keys(row).forEach((col) => {
+        if (!ignoredKeys.includes(col.toLowerCase().trim())) {
+          const markVal = isCopyingPrevTerm ? '' : (row[col] ?? '');
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
+          if (coreList.includes(col)) {
+            coreMarks[col] = markVal;
+          } else {
+            // Identified as Basket / Aesthetic
+            if (!baskets.b1.sub) baskets.b1 = { sub: col, mark: markVal };
+            else if (!baskets.b2.sub) baskets.b2 = { sub: col, mark: markVal };
+            else if (!baskets.b3.sub) baskets.b3 = { sub: col, mark: markVal };
+          }
+        }
+      });
+
+      return {
+        id: idx || Date.now() + Math.random(),
+        indexNo: String(idx),
+        name: String(name),
+        coreMarks,
+        baskets
+      };
+    });
+  };
+
+  // Smart Auto-Load & Previous Term Fallback
+  useEffect(() => {
+    if (!isAuthenticated || activeTab !== 'entry') return;
+
+    const loadTableData = async () => {
+      setTableLoading(true);
+      setUploadStatus(null);
       try {
-        const bstr = evt.target.result;
-        const workbook = XLSX.read(bstr, { type: 'binary', cellDates: true });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const rawJsonData = XLSX.utils.sheet_to_json(sheet);
+        // 1. Current Term check
+        const currentData = await fetchSheetData(term);
 
-        if (!rawJsonData || rawJsonData.length === 0) {
-          alert('මෙම file එකේ දත්ත කිසිවක් නැත (Empty file)!');
-          e.target.value = '';
-          return;
+        if (currentData && currentData.length > 0) {
+          setTableRows(mapJsonToTableRows(currentData, false));
+          setHasExistingData(true);
+          setIsEditing(false); // View mode
+        } else {
+          // 2. Data na -> Fallback to previous terms for indexes & names
+          setHasExistingData(false);
+          setIsEditing(true);
+
+          const termOrder = ['Term 1', 'Term 2', 'Term 3'];
+          const currentIndex = termOrder.indexOf(term);
+          let prevFound = false;
+
+          if (currentIndex > 0) {
+            for (let i = currentIndex - 1; i >= 0; i--) {
+              const prevTerm = termOrder[i];
+              const prevData = await fetchSheetData(prevTerm);
+              if (prevData && prevData.length > 0) {
+                setTableRows(mapJsonToTableRows(prevData, true));
+                prevFound = true;
+                break;
+              }
+            }
+          }
+
+          if (!prevFound) {
+            setTableRows([createBlankRow(), createBlankRow(), createBlankRow()]);
+          }
         }
-
-        // Structure Check
-        const firstRowKeys = Object.keys(rawJsonData[0]).map(k => k.toLowerCase().replace(/[^a-z0-9]/g, ''));
-        const hasIndex = firstRowKeys.some(k => ['indexno', 'index', 'admissionno'].includes(k));
-        const hasName = firstRowKeys.some(k => ['studentname', 'name'].includes(k));
-
-        if (!hasIndex || !hasName) {
-          alert('වලංගු නොවන Sheet ආකෘතියකි (Invalid Format)! \n\nFile එකේ "Index No" (හෝ Admission No) සහ "Student Name" තීරු අනිවාර්යයෙන්ම තිබිය යුතුය.');
-          e.target.value = '';
-          return;
-        }
-
-        // Blank Row Filter
-        const cleanedData = rawJsonData.filter((row) => {
-          const idx = row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index;
-          const name = row.StudentName || row.Name;
-          return (
-            idx !== undefined &&
-            String(idx).trim() !== '' &&
-            name !== undefined &&
-            String(name).trim() !== ''
-          );
-        });
-
-        if (cleanedData.length === 0) {
-          alert('මෙම file එකේ වලංගු ශිෂ්‍ය දත්ත කිසිවක් හඳුනාගත නොහැකි විය!');
-          e.target.value = '';
-          return;
-        }
-
-        setSelectedFile(file);
-        setParsedData(cleanedData);
-        setUploadAnalytics(calculateAnalytics(cleanedData));
-
       } catch (err) {
-        console.error('File parsing error:', err);
-        alert('File එක කියවීමේදී දෝෂයක් සිදුවිය. Sheet එක නිවැරදිදැයි පරීක්ෂා කරන්න.');
-        e.target.value = '';
+        console.error('Error loading class data:', err);
+      } finally {
+        setTableLoading(false);
       }
     };
-    reader.readAsBinaryString(file);
+
+    loadTableData();
+  }, [isAuthenticated, activeTab, year, grade, classSection, term, alStream]);
+
+  // Row update handlers
+  const handleAddRow = () => {
+    setTableRows(prev => [...prev, createBlankRow()]);
   };
 
-  // Upload to Sanity (Exports the edited preview data back to clean XLSX)
-  const handleUploadToSanity = async () => {
-    if (!parsedData || parsedData.length === 0) {
-      alert('Upload කිරීමට දත්ත කිසිවක් නොමැත!');
+  const handleRemoveRow = (id) => {
+    setTableRows(prev => prev.filter(r => r.id !== id));
+  };
+
+  const handleFieldChange = (id, field, value) => {
+    setTableRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+  };
+
+  const handleCoreMarkChange = (id, subject, mark) => {
+    setTableRows(prev => prev.map(r => {
+      if (r.id === id) {
+        return { ...r, coreMarks: { ...r.coreMarks, [subject]: mark } };
+      }
+      return r;
+    }));
+  };
+
+  const handleBasketChange = (id, basketKey, prop, val) => {
+    setTableRows(prev => prev.map(r => {
+      if (r.id === id) {
+        return {
+          ...r,
+          baskets: {
+            ...r.baskets,
+            [basketKey]: { ...r.baskets[basketKey], [prop]: val }
+          }
+        };
+      }
+      return r;
+    }));
+  };
+
+  // Direct Save to Sanity (Transforms table to XLSX asset & updates resultSheet document)
+  const handleSaveToSanity = async () => {
+    const validRows = tableRows.filter(r => r.indexNo.trim() !== '' && r.name.trim() !== '');
+    if (validRows.length === 0) {
+      alert('ඇතුළත් කිරීමට වලංගු ශිෂ්‍ය දත්ත නොමැත! (Index No සහ Name ඇතුළත් කරන්න)');
       return;
     }
 
@@ -218,14 +341,47 @@ const TeacherUploadPortal = () => {
     setUploadStatus(null);
 
     try {
-      // Create updated XLSX workbook from edited table state
-      const worksheet = XLSX.utils.json_to_sheet(parsedData);
+      const coreList = getActiveCoreSubjects();
+
+      // Transform rows to flat object format compatible with Sanity reports
+      const flatData = validRows.map(row => {
+        const item = {
+          'Index No': row.indexNo.trim(),
+          'Student Name': row.name.trim()
+        };
+
+        // Core subjects
+        coreList.forEach(sub => {
+          item[sub] = row.coreMarks[sub] !== undefined && row.coreMarks[sub] !== '' 
+            ? Number(row.coreMarks[sub]) 
+            : '';
+        });
+
+        // Basket / Aesthetics
+        if (category === 'junior') {
+          if (row.baskets.b1.sub) {
+            item[row.baskets.b1.sub] = row.baskets.b1.mark !== '' ? Number(row.baskets.b1.mark) : '';
+          }
+        } else if (category === 'ol') {
+          ['b1', 'b2', 'b3'].forEach(bKey => {
+            const b = row.baskets[bKey];
+            if (b.sub) {
+              item[b.sub] = b.mark !== '' ? Number(b.mark) : '';
+            }
+          });
+        }
+
+        return item;
+      });
+
+      // Build XLSX workbook
+      const worksheet = XLSX.utils.json_to_sheet(flatData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Results');
       const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
       const finalBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-      const safeFileName = selectedFile ? selectedFile.name : `Results_${grade}_${classSection}_${term}.xlsx`;
+      const safeFileName = `Results_${year}_${grade}_${classSection}_${term}.xlsx`;
 
       const fileAsset = await client.assets.upload('file', finalBlob, {
         filename: safeFileName,
@@ -257,23 +413,22 @@ const TeacherUploadPortal = () => {
 
       setUploadStatus({
         type: 'success',
-        msg: `සාර්ථකව යාවත්කාලීන / Upload විය: ${documentTitle} ✅`,
+        msg: `ලකුණු සාර්ථකව සුරැකිණි (Saved successfully): ${documentTitle} ✅`,
       });
-      setSelectedFile(null);
-      setParsedData([]);
-      setUploadAnalytics({});
+      setIsEditing(false);
+      setHasExistingData(true);
     } catch (error) {
-      console.error('Upload failed details:', error);
+      console.error('Save failed details:', error);
       setUploadStatus({
         type: 'error',
-        msg: `Upload failed: ${error.message || 'Sanity Write Token සහ Network check කරන්න.'}`,
+        msg: `සුරැකීම අසාර්ථක විය: ${error.message || 'Sanity Write Token සහ Network check කරන්න.'}`,
       });
     } finally {
       setIsUploading(false);
     }
   };
 
-  // Fetch Class Sheet for Reporting
+  // Fetch Class Sheet for Reporting (TAB 2)
   const handleFetchClassReport = async () => {
     setReportLoading(true);
     setReportError('');
@@ -332,7 +487,6 @@ const TeacherUploadPortal = () => {
     window.print();
   };
 
-  // Filter students based on search
   const filteredReportRows = reportRows.filter((row) => {
     const idx = String(row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index || '').toLowerCase();
     const name = String(row.StudentName || row.Name || '').toLowerCase();
@@ -340,7 +494,6 @@ const TeacherUploadPortal = () => {
     return idx.includes(q) || name.includes(q);
   });
 
-  // Extract subject columns for class report
   const reportSubjectColumns = reportRows.length > 0
     ? Object.keys(reportRows[0]).filter(k => ![
         'studentname', 'name', 'indexno', 'index', 'admissionno', 
@@ -348,6 +501,8 @@ const TeacherUploadPortal = () => {
         'date of birth', 'birthday', '__rownum__', 'total', 'average', 'rank', 'place'
       ].includes(k.toLowerCase().trim()))
     : [];
+
+  const coreList = getActiveCoreSubjects();
 
   // --- VIEW 1: Password Gatekeeper ---
   if (!isAuthenticated) {
@@ -385,7 +540,7 @@ const TeacherUploadPortal = () => {
 
   // --- VIEW 2: Dashboard with Tabs ---
   return (
-    <div style={{ maxWidth: '1050px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '16px', padding: '32px', boxShadow: '0 10px 25px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0', fontFamily: 'Segoe UI, Roboto, sans-serif' }}>
+    <div style={{ maxWidth: '1150px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '16px', padding: '32px', boxShadow: '0 10px 25px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0', fontFamily: 'Segoe UI, Roboto, sans-serif' }}>
       
       <style>{`
         @media print {
@@ -400,7 +555,7 @@ const TeacherUploadPortal = () => {
       <div className="no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '18px', marginBottom: '20px' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: '0 0 6px 0' }}>ගුරු කළමනාකරණ පද්ධතිය (Teacher Portal)</h1>
-          <p style={{ fontSize: '0.88rem', color: '#64748b', margin: 0 }}>Results upload කරන්න හෝ පන්ති ලකුණු වාර්තාව (Class Mark Sheet) බලා Print කරගන්න.</p>
+          <p style={{ fontSize: '0.88rem', color: '#64748b', margin: 0 }}>ලකුණු සෘජුව ඇතුළත්/වෙනස් කරන්න හෝ පන්ති ලකුණු වාර්තාව (Class Mark Sheet) බලා Print කරගන්න.</p>
         </div>
         <button
           onClick={() => setIsAuthenticated(false)}
@@ -413,19 +568,19 @@ const TeacherUploadPortal = () => {
       {/* Tab Switcher */}
       <div className="no-print" style={{ display: 'flex', gap: '8px', borderBottom: '2px solid #e2e8f0', marginBottom: '24px' }}>
         <button
-          onClick={() => setActiveTab('upload')}
+          onClick={() => setActiveTab('entry')}
           style={{
             padding: '10px 20px',
             border: 'none',
             background: 'none',
-            borderBottom: activeTab === 'upload' ? '3px solid #2563eb' : '3px solid transparent',
-            color: activeTab === 'upload' ? '#2563eb' : '#64748b',
+            borderBottom: activeTab === 'entry' ? '3px solid #2563eb' : '3px solid transparent',
+            color: activeTab === 'entry' ? '#2563eb' : '#64748b',
             fontWeight: '700',
             fontSize: '0.95rem',
             cursor: 'pointer'
           }}
         >
-          📤 Upload Results
+          📝 Result Entry (ලකුණු ඇතුළත් කිරීම)
         </button>
         <button
           onClick={() => setActiveTab('report')}
@@ -474,100 +629,232 @@ const TeacherUploadPortal = () => {
             <option value="Term 3" style={optionStyle}>Term 3</option>
           </select>
         </div>
+        {category === 'al' && (
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>A/L STREAM</label>
+            <select value={alStream} onChange={(e) => setAlStream(e.target.value)} style={inputControlStyle}>
+              <option value="maths" style={optionStyle}>Physical Science (Maths)</option>
+              <option value="bio" style={optionStyle}>Biological Science</option>
+              <option value="commerce" style={optionStyle}>Commerce</option>
+              <option value="arts" style={optionStyle}>Arts</option>
+              <option value="tech" style={optionStyle}>Technology</option>
+            </select>
+          </div>
+        )}
       </div>
 
-      {/* TAB 1: UPLOAD VIEW */}
-      {activeTab === 'upload' && (
+      {/* TAB 1: DIRECT RESULT ENTRY & EDIT VIEW */}
+      {activeTab === 'entry' && (
         <div>
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', border: '2px dashed #93c5fd', backgroundColor: '#f8fafc', padding: '36px 20px', textAlign: 'center', cursor: 'pointer' }}>
-              <span style={{ fontSize: '38px', marginBottom: '8px' }}>📑</span>
-              <span style={{ fontSize: '0.95rem', fontWeight: '600', color: '#1e293b' }}>
-                {selectedFile ? selectedFile.name : 'Excel (.xlsx, .csv) file එකක් තෝරන්න'}
+          {/* Action Header for Table */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <span style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
+                {grade} - {classSection} ({term}) ලකුණු ලේඛනය
               </span>
-              <span style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>Click කර පරිගණකයෙන් file එක තෝරන්න</span>
-              <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileChange} style={{ display: 'none' }} />
-            </label>
+              <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                {hasExistingData 
+                  ? (isEditing ? '✏️ Edit Mode: අවශ්‍ය වෙනස්කම් සිදුකර "Save All Changes" ඔබන්න.' : '🔒 View Mode: දත්ත සංස්කරණය කිරීමට "Edit Marks" ඔබන්න.')
+                  : '✨ නව ලකුණු ඇතුළත් කිරීම (කලින් Term එකේ නම් හා අංක ස්වයංක්‍රීයව එක්විය හැක).'}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {hasExistingData && !isEditing && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  style={{ padding: '8px 16px', backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', fontSize: '0.88rem', cursor: 'pointer' }}
+                >
+                  ✏️ Edit Marks
+                </button>
+              )}
+              {isEditing && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleAddRow}
+                    style={{ padding: '8px 14px', backgroundColor: '#f1f5f9', border: '1.5px solid #cbd5e1', borderRadius: '8px', color: '#334155', fontWeight: '600', fontSize: '0.88rem', cursor: 'pointer' }}
+                  >
+                    + Add Student
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveToSanity}
+                    disabled={isUploading}
+                    style={{ padding: '8px 20px', backgroundColor: '#16a34a', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '700', fontSize: '0.88rem', cursor: isUploading ? 'not-allowed' : 'pointer' }}
+                  >
+                    {isUploading ? 'සුරැකෙමින් පවතී...' : 'Save All Results 🚀'}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
-          {parsedData.length > 0 && (
-            <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px', backgroundColor: '#f8fafc', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
-                <div>
-                  <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#1e293b' }}>Preview: ළමුන් {parsedData.length} දෙනෙකු හඳුනා ගැනිණි</span>
-                  <p style={{ margin: '3px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>💡 වැරදි ඇති කොටු මෙතැනදීම ක්ලික් කර නිවැරදි කළ හැක</p>
-                </div>
-                <button
-                  onClick={handleUploadToSanity}
-                  disabled={isUploading}
-                  style={{ padding: '9px 18px', backgroundColor: '#16a34a', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', fontSize: '0.88rem', cursor: isUploading ? 'not-allowed' : 'pointer' }}
-                >
-                  {isUploading ? 'Upload වෙමින් පවතී...' : 'Submit to Sanity 🚀'}
-                </button>
-              </div>
-
-              {/* Editable Preview Table */}
-              <div style={{ maxHeight: '280px', overflowY: 'auto', marginTop: '12px', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', backgroundColor: '#fff' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'left', position: 'sticky', top: 0, zIndex: 1 }}>
-                      {Object.keys(parsedData[0]).map((col) => (
-                        <th key={col} style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b' }}>{col}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {parsedData.map((row, rowIdx) => (
-                      <tr key={rowIdx}>
-                        {Object.keys(parsedData[0]).map((col) => {
-                          const val = String(row[col] ?? '');
-                          const isDobField = col.toLowerCase().includes('dob') || col.toLowerCase().includes('birth');
-                          // DOB validation: YYYY-MM-DD nathnam (e.g. 39716 wage number ekak nam) red alert
-                          const isInvalidDob = isDobField && (!val.includes('-') || val.length < 8);
-
-                          return (
-                            <td key={col} style={{ padding: '4px', border: '1px solid #e2e8f0' }}>
-                              <input
-                                type="text"
-                                value={val}
-                                onChange={(e) => handleCellEdit(rowIdx, col, e.target.value)}
-                                style={{
-                                  width: '100%',
-                                  padding: '6px 8px',
-                                  borderRadius: '6px',
-                                  fontSize: '0.82rem',
-                                  border: isInvalidDob ? '2px solid #ef4444' : '1px solid transparent',
-                                  backgroundColor: isInvalidDob ? '#fef2f2' : 'transparent',
-                                  color: isInvalidDob ? '#dc2626' : '#1e293b',
-                                  fontWeight: isInvalidDob ? '700' : 'normal',
-                                  boxSizing: 'border-box',
-                                  outline: 'none',
-                                  transition: 'border 0.2s'
-                                }}
-                                onFocus={(e) => e.target.style.border = isInvalidDob ? '2px solid #ef4444' : '1px solid #2563eb'}
-                                onBlur={(e) => e.target.style.border = isInvalidDob ? '2px solid #ef4444' : '1px solid transparent'}
-                                title={isInvalidDob ? 'වැරදි DOB ආකෘතියකි! කරුණාකර YYYY-MM-DD ආකෘතියෙන් සකසන්න[cite: 1].' : ''}
-                              />
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          {uploadStatus && (
+            <div style={{ padding: '12px', borderRadius: '8px', textAlign: 'center', fontSize: '0.9rem', fontWeight: '600', marginBottom: '16px', backgroundColor: uploadStatus.type === 'success' ? '#f0fdf4' : '#fef2f2', color: uploadStatus.type === 'success' ? '#15803d' : '#b91c1c', border: `1px solid ${uploadStatus.type === 'success' ? '#bbf7d0' : '#fecaca'}` }}>
+              {uploadStatus.msg}
             </div>
           )}
 
-          {uploadStatus && (
-            <div style={{ padding: '12px', borderRadius: '8px', textAlign: 'center', fontSize: '0.9rem', fontWeight: '600', backgroundColor: uploadStatus.type === 'success' ? '#f0fdf4' : '#fef2f2', color: uploadStatus.type === 'success' ? '#15803d' : '#b91c1c', border: `1px solid ${uploadStatus.type === 'success' ? '#bbf7d0' : '#fecaca'}` }}>
-              {uploadStatus.msg}
+          {tableLoading ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+              ලකුණු සහ ශිෂ්‍ය දත්ත පූරණය වෙමින් පවතී...
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto', border: '1px solid #cbd5e1', borderRadius: '10px', backgroundColor: '#ffffff' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #cbd5e1', textAlign: 'left' }}>
+                    <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b', width: '90px' }}>ඇතුළත් අංකය</th>
+                    <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', minWidth: '150px', color: '#1e293b' }}>නම</th>
+                    {coreList.map((sub) => (
+                      <th key={sub} style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#1e293b', textAlign: 'center', minWidth: '65px' }}>{sub}</th>
+                    ))}
+                    {category === 'junior' && (
+                      <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b', minWidth: '150px' }}>සෞන්දර්ය විෂය</th>
+                    )}
+                    {category === 'ol' && (
+                      <>
+                        <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b', minWidth: '150px' }}>කාණ්ඩය 1 (Basket 1)</th>
+                        <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b', minWidth: '150px' }}>කාණ්ඩය 2 (Basket 2)</th>
+                        <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', color: '#1e293b', minWidth: '150px' }}>කාණ්ඩය 3 (Basket 3)</th>
+                      </>
+                    )}
+                    {isEditing && <th style={{ width: '40px', border: '1px solid #cbd5e1' }}></th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableRows.map((row) => (
+                    <tr key={row.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '4px', border: '1px solid #e2e8f0' }}>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={row.indexNo}
+                            onChange={(e) => handleFieldChange(row.id, 'indexNo', e.target.value)}
+                            placeholder="Index"
+                            style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.82rem', boxSizing: 'border-box', fontWeight: '700' }}
+                          />
+                        ) : (
+                          <span style={{ fontWeight: '700', paddingLeft: '4px' }}>{row.indexNo}</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '4px', border: '1px solid #e2e8f0' }}>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={row.name}
+                            onChange={(e) => handleFieldChange(row.id, 'name', e.target.value)}
+                            placeholder="Student Name"
+                            style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.82rem', boxSizing: 'border-box' }}
+                          />
+                        ) : (
+                          <span style={{ fontWeight: '600', paddingLeft: '4px' }}>{row.name}</span>
+                        )}
+                      </td>
+
+                      {/* Core Marks */}
+                      {coreList.map((sub) => (
+                        <td key={sub} style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              value={row.coreMarks[sub] ?? ''}
+                              onChange={(e) => handleCoreMarkChange(row.id, sub, e.target.value)}
+                              style={{ width: '50px', padding: '6px 2px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.82rem', textAlign: 'center' }}
+                            />
+                          ) : (
+                            <span>{row.coreMarks[sub] !== undefined && row.coreMarks[sub] !== '' ? row.coreMarks[sub] : '-'}</span>
+                          )}
+                        </td>
+                      ))}
+
+                      {/* Junior Aesthetics */}
+                      {category === 'junior' && (
+                        <td style={{ padding: '4px', border: '1px solid #e2e8f0' }}>
+                          {isEditing ? (
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <select
+                                value={row.baskets.b1.sub}
+                                onChange={(e) => handleBasketChange(row.id, 'b1', 'sub', e.target.value)}
+                                style={{ padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem' }}
+                              >
+                                <option value="">තෝරන්න</option>
+                                {SUBJECT_CONFIG.junior.aesthetics.map((s) => (
+                                  <option key={s} value={s}>{s}</option>
+                                ))}
+                              </select>
+                              <input
+                                type="number"
+                                value={row.baskets.b1.mark}
+                                onChange={(e) => handleBasketChange(row.id, 'b1', 'mark', e.target.value)}
+                                placeholder="Marks"
+                                style={{ width: '45px', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', textAlign: 'center' }}
+                              />
+                            </div>
+                          ) : (
+                            <span>{row.baskets.b1.sub ? `${row.baskets.b1.sub}: ${row.baskets.b1.mark}` : '-'}</span>
+                          )}
+                        </td>
+                      )}
+
+                      {/* O/L Baskets */}
+                      {category === 'ol' && (
+                        <>
+                          {['b1', 'b2', 'b3'].map((bKey, idx) => (
+                            <td key={bKey} style={{ padding: '4px', border: '1px solid #e2e8f0' }}>
+                              {isEditing ? (
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  <select
+                                    value={row.baskets[bKey].sub}
+                                    onChange={(e) => handleBasketChange(row.id, bKey, 'sub', e.target.value)}
+                                    style={{ padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', maxWidth: '100px' }}
+                                  >
+                                    <option value="">තෝරන්න</option>
+                                    {SUBJECT_CONFIG.ol[`basket${idx + 1}`].map((s) => (
+                                      <option key={s} value={s}>{s}</option>
+                                    ))}
+                                  </select>
+                                  <input
+                                    type="number"
+                                    value={row.baskets[bKey].mark}
+                                    onChange={(e) => handleBasketChange(row.id, bKey, 'mark', e.target.value)}
+                                    placeholder="Marks"
+                                    style={{ width: '45px', padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', textAlign: 'center' }}
+                                  />
+                                </div>
+                              ) : (
+                                <span>{row.baskets[bKey].sub ? `${row.baskets[bKey].sub}: ${row.baskets[bKey].mark}` : '-'}</span>
+                              )}
+                            </td>
+                          ))}
+                        </>
+                      )}
+
+                      {/* Delete row */}
+                      {isEditing && (
+                        <td style={{ textAlign: 'center', border: '1px solid #e2e8f0' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveRow(row.id)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '1rem' }}
+                            title="Remove Student"
+                          >
+                            ✕
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
       )}
 
-      {/* TAB 2: CLASS MARK SHEET (REPORT VIEWER) */}
+      {/* TAB 2: CLASS MARK SHEET (REPORT VIEWER & ANALYTICS) */}
       {activeTab === 'report' && (
         <div>
           <div className="no-print" style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
