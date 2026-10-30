@@ -54,6 +54,41 @@ const TeacherUploadPortal = () => {
   const [reportFileUrl, setReportFileUrl] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Fixed Missing Styles
+  const inputControlStyle = {
+    width: '100%',
+    padding: '10px 14px',
+    borderRadius: '8px',
+    border: '1.5px solid #cbd5e1',
+    backgroundColor: '#ffffff',
+    color: '#0f172a',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    outline: 'none',
+    boxSizing: 'border-box',
+    cursor: 'pointer'
+  };
+
+  const optionStyle = {
+    backgroundColor: '#ffffff',
+    color: '#0f172a',
+    fontSize: '0.95rem'
+  };
+
+  const cellInputStyle = {
+    width: '100%',
+    padding: '7px 8px',
+    borderRadius: '6px',
+    border: '1.5px solid #94a3b8',
+    backgroundColor: '#ffffff',
+    color: '#0f172a',
+    fontSize: '0.84rem',
+    fontWeight: '600',
+    boxSizing: 'border-box',
+    outline: 'none',
+    textAlign: 'center'
+  };
+
   const getGradeCategory = () => {
     const num = parseInt(grade.replace(/\D/g, ''), 10);
     if (num >= 6 && num <= 9) return 'junior';
@@ -624,21 +659,6 @@ const TeacherUploadPortal = () => {
 
   const coreList = getActiveCoreSubjects();
 
-  // --- Common Input Styles for Clarity ---
-  const cellInputStyle = {
-    width: '100%',
-    padding: '7px 8px',
-    borderRadius: '6px',
-    border: '1.5px solid #94a3b8',
-    backgroundColor: '#ffffff',
-    color: '#0f172a',
-    fontSize: '0.84rem',
-    fontWeight: '600',
-    boxSizing: 'border-box',
-    outline: 'none',
-    textAlign: 'center'
-  };
-
   // --- VIEW 1: Password Gatekeeper ---
   if (!isAuthenticated) {
     return (
@@ -1007,7 +1027,7 @@ const TeacherUploadPortal = () => {
         </div>
       )}
 
-      {/* TAB 2: CLASS MARK SHEET (REPORT VIEWER WITH ENHANCED CONTRAST) */}
+      {/* TAB 2: CLASS MARK SHEET */}
       {activeTab === 'report' && (
         <div>
           <div className="no-print" style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
