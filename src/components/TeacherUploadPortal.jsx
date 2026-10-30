@@ -110,7 +110,7 @@ const TeacherUploadPortal = () => {
     if (!rows || rows.length === 0) return {};
 
     const ignoredKeys = [
-      'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 
+      'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
       'grade', 'term', 'section', 'class', 'classsection', 'dob', 
       'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place'
     ];
@@ -180,30 +180,42 @@ const TeacherUploadPortal = () => {
     return isNaN(num) ? cleanStr : num;
   };
 
-  // Flexible Sanity fetch for both Current and Previous Terms
+  // Robust query generator helper
+  const getSanityQueryAndParams = (targetTerm) => {
+    const numGrade = grade.replace(/\D/g, '').trim();
+    const cleanSection = classSection.trim();
+    const cleanGradeStr = grade.toLowerCase().replace(/\s+/g, '');
+    const cleanTermStr = targetTerm.toLowerCase().replace(/\s+/g, '');
+    const uniqueDocId = `result-${year}-${cleanTermStr}-${cleanGradeStr}-${cleanSection.toLowerCase()}`;
+
+    const query = `*[_type == "resultSheet" && (_id == $uniqueDocId || (term == $targetTerm && (grade == $grade || grade == $shortGrade || grade == $pureGrade) && (classSection == $section || classSection == $fullSection || classSection == $dashSection)))][0]{
+      _id,
+      title,
+      year,
+      grade,
+      term,
+      classSection,
+      "fileUrl": file.asset->url
+    }`;
+
+    const params = {
+      uniqueDocId,
+      targetTerm,
+      grade: grade,
+      shortGrade: `Grade ${numGrade}`,
+      pureGrade: numGrade,
+      section: cleanSection,
+      fullSection: `${numGrade}-${cleanSection}`,
+      dashSection: `${numGrade} - ${cleanSection}`
+    };
+
+    return { query, params };
+  };
+
   const fetchSheetData = async (targetTerm) => {
     try {
-      const numGrade = grade.replace(/\D/g, '').trim();
-      const cleanSection = classSection.trim();
-
-      const query = `*[_type == "resultSheet" && term == $targetTerm && (grade == $grade || grade == $shortGrade || grade == $pureGrade) && (classSection == $section || classSection == $fullSection || classSection == $dashSection)][0]{
-        title,
-        year,
-        grade,
-        term,
-        classSection,
-        "fileUrl": file.asset->url
-      }`;
-
-      const resultDoc = await client.fetch(query, {
-        targetTerm: targetTerm,
-        grade: grade,
-        shortGrade: `Grade ${numGrade}`,
-        pureGrade: numGrade,
-        section: cleanSection,
-        fullSection: `${numGrade}-${cleanSection}`,
-        dashSection: `${numGrade} - ${cleanSection}`
-      });
+      const { query, params } = getSanityQueryAndParams(targetTerm);
+      const resultDoc = await client.fetch(query, params);
 
       if (!resultDoc || !resultDoc.fileUrl) return null;
 
@@ -219,7 +231,6 @@ const TeacherUploadPortal = () => {
     }
   };
 
-  // Convert raw JSON rows to Table Rows without corrupting Baskets
   const mapJsonToTableRows = (jsonData, isCopyingPrevTerm = false) => {
     const coreList = getActiveCoreSubjects();
 
@@ -366,7 +377,7 @@ const TeacherUploadPortal = () => {
     }));
   };
 
-  // Direct Save to Sanity via Native Fetch to avoid dynamic bundle chunk error
+  // Direct Save to Sanity via Native Fetch
   const handleSaveToSanity = async () => {
     const validRows = tableRows.filter(r => r.indexNo.trim() !== '' && r.name.trim() !== '');
     if (validRows.length === 0) {
@@ -421,7 +432,6 @@ const TeacherUploadPortal = () => {
 
       let fileAssetId = null;
 
-      // Direct REST upload
       if (token) {
         const uploadResponse = await fetch(
           `https://${projectId}.api.sanity.io/v2021-06-07/assets/files/${dataset}?filename=${encodeURIComponent(safeFileName)}`,
@@ -490,6 +500,7 @@ const TeacherUploadPortal = () => {
     }
   };
 
+  // TAB 2: Class Report Fetcher (Fixed for lenient key matches)
   const handleFetchClassReport = async () => {
     setReportLoading(true);
     setReportError('');
@@ -498,25 +509,11 @@ const TeacherUploadPortal = () => {
     setReportFileUrl('');
 
     try {
-      const numGrade = grade.replace(/\D/g, '').trim();
-      const cleanSection = classSection.trim();
-
-      const query = `*[_type == "resultSheet" && term == $term && (grade == $grade || grade == $shortGrade || grade == $pureGrade) && (classSection == $section || classSection == $fullSection || classSection == $dashSection)][0]{
-        title,
-        "fileUrl": file.asset->url
-      }`;
-      const resultDoc = await client.fetch(query, {
-        grade: grade,
-        shortGrade: `Grade ${numGrade}`,
-        pureGrade: numGrade,
-        term: term,
-        section: cleanSection,
-        fullSection: `${numGrade}-${cleanSection}`,
-        dashSection: `${numGrade} - ${cleanSection}`
-      });
+      const { query, params } = getSanityQueryAndParams(term);
+      const resultDoc = await client.fetch(query, params);
 
       if (!resultDoc || !resultDoc.fileUrl) {
-        setReportError(`${grade}-${classSection} (${term}) සඳහා තවමත් sheet එකක් upload කර නැත.`);
+        setReportError(`${grade}-${classSection} (${term}) සඳහා Sanity හි sheet එකක් හමු නොවීය. කරුණාකර පළමුව "Result Entry" වෙත ගොස් Save කරන්න.`);
         setReportLoading(false);
         return;
       }
@@ -530,22 +527,38 @@ const TeacherUploadPortal = () => {
       const worksheet = workbook.Sheets[firstSheetName];
       const rawJsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
+      if (!rawJsonData || rawJsonData.length === 0) {
+        setReportError('File එකේ ශිෂ්‍ය දත්ත හමු නොවීය (Empty Sheet).');
+        setReportLoading(false);
+        return;
+      }
+
       const cleanedReportData = rawJsonData.filter((row) => {
-        const idx = row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index;
-        const name = row.StudentName || row.Name;
-        return (
-          idx !== undefined &&
-          String(idx).trim() !== '' &&
-          name !== undefined &&
-          String(name).trim() !== ''
-        );
+        let hasIdx = false;
+        let hasName = false;
+
+        Object.keys(row).forEach((k) => {
+          const cleanKey = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (['indexno', 'index', 'admissionno', 'athulathankaya'].includes(cleanKey)) {
+            if (String(row[k]).trim() !== '') hasIdx = true;
+          }
+          if (['studentname', 'name', 'nama'].includes(cleanKey)) {
+            if (String(row[k]).trim() !== '') hasName = true;
+          }
+        });
+
+        return hasIdx || hasName;
       });
 
-      setReportRows(cleanedReportData);
-      setReportAnalytics(calculateAnalytics(cleanedReportData));
+      if (cleanedReportData.length === 0) {
+        setReportError('ශිෂ්‍ය දත්ත හඳුනාගත නොහැකි විය. කරුණාකර "Result Entry" වෙතින් නැවත Save කරන්න.');
+      } else {
+        setReportRows(cleanedReportData);
+        setReportAnalytics(calculateAnalytics(cleanedReportData));
+      }
     } catch (err) {
       console.error('Class sheet fetch error:', err);
-      setReportError('Data ලබාගැනීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න.');
+      setReportError(`දෝෂයක් සිදුවිය: ${err.message || 'Data ලබාගැනීමට නොහැකි විය.'}`);
     } finally {
       setReportLoading(false);
     }
@@ -556,15 +569,15 @@ const TeacherUploadPortal = () => {
   };
 
   const filteredReportRows = reportRows.filter((row) => {
-    const idx = String(row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index || '').toLowerCase();
-    const name = String(row.StudentName || row.Name || '').toLowerCase();
+    const idx = String(row['Index No'] || row.IndexNo || row.AdmissionNo || row.Index || '').toLowerCase();
+    const name = String(row['Student Name'] || row.StudentName || row.Name || '').toLowerCase();
     const q = searchQuery.toLowerCase().trim();
     return idx.includes(q) || name.includes(q);
   });
 
   const reportSubjectColumns = reportRows.length > 0
     ? Object.keys(reportRows[0]).filter(k => ![
-        'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 
+        'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
         'grade', 'term', 'section', 'class', 'classsection', 'dob', 
         'dateofbirth', 'birthday', 'rownum', 'total', 'average', 'rank', 'place'
       ].includes(k.toLowerCase().replace(/[^a-z0-9]/g, '')))
@@ -821,7 +834,7 @@ const TeacherUploadPortal = () => {
                         )}
                       </td>
 
-                      {/* Core Marks: Text input allows digits and "Ab" */}
+                      {/* Core Marks */}
                       {coreList.map((sub) => (
                         <td key={sub} style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
                           {isEditing ? (
@@ -994,10 +1007,10 @@ const TeacherUploadPortal = () => {
                     {filteredReportRows.map((row, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
                         <td style={{ padding: '8px 6px', border: '1px solid #e2e8f0', fontWeight: '700' }}>
-                          {row.IndexNo || row['Index No'] || row.AdmissionNo || row.Index}
+                          {row['Index No'] || row.IndexNo || row.AdmissionNo || row.Index || row.athulathankaya || '-'}
                         </td>
                         <td style={{ padding: '8px 6px', border: '1px solid #e2e8f0', textAlign: 'left', fontWeight: '600' }}>
-                          {row.StudentName || row.Name}
+                          {row['Student Name'] || row.StudentName || row.Name || row.nama || '-'}
                         </td>
                         {reportSubjectColumns.map((col) => (
                           <td key={col} style={{ padding: '8px 6px', border: '1px solid #e2e8f0' }}>
