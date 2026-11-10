@@ -115,24 +115,21 @@ const TeacherUploadPortal = () => {
     }
   };
 
-  const calculateAnalytics = (rows) => {
-    if (!rows || rows.length === 0) return {};
+  // Ignored keys array used across functions
+  const SYSTEM_IGNORED_KEYS = [
+    'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
+    'dob', 'dateofbirth', 'birthday', 'upandinaya',
+    'grade', 'term', 'section', 'class', 'classsection', 
+    'rownum', 'total', 'average', 'rank', 'place',
+    'numerictotal', 'avg', '__total', '__numerictotal', '__avg', '__rank'
+  ];
 
-    const ignoredKeys = [
-      'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
-      'dob', 'dateofbirth', 'birthday', 'upandinaya',
-      'grade', 'term', 'section', 'class', 'classsection', 
-      'rownum', 'total', 'average', 'rank', 'place',
-      '__total', '__numerictotal', '__avg', '__rank'
-    ];
-
-    const subjectKeys = Object.keys(rows[0]).filter(
-      (key) => !ignoredKeys.includes(key.toLowerCase().replace(/[^a-z0-9]/g, ''))
-    );
+  const calculateAnalytics = (rows, validSubjects) => {
+    if (!rows || rows.length === 0 || !validSubjects || validSubjects.length === 0) return {};
 
     const stats = {};
 
-    subjectKeys.forEach((subj) => {
+    validSubjects.forEach((subj) => {
       let below40 = 0;
       let above40 = 0;
       const validMarks = [];
@@ -317,18 +314,10 @@ const TeacherUploadPortal = () => {
         b3: { sub: '', mark: '' }
       };
 
-      const blacklistedKeys = [
-        'studentname', 'name', 'nama',
-        'indexno', 'index', 'admissionno', 'athulathankaya',
-        'dob', 'dateofbirth', 'birthday', 'upandinaya',
-        'grade', 'term', 'section', 'class', 'classsection', 
-        'rownum', 'total', 'average', 'rank', 'place'
-      ];
-
       Object.keys(row).forEach((col) => {
         const cleanCol = col.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-        if (!blacklistedKeys.includes(cleanCol)) {
+        if (!SYSTEM_IGNORED_KEYS.includes(cleanCol)) {
           const rawVal = row[col];
           const markVal = isCopyingPrevTerm ? '' : (rawVal !== '' ? String(rawVal) : '');
 
@@ -616,18 +605,17 @@ const TeacherUploadPortal = () => {
         setReportError('ශිෂ්‍ය දත්ත හඳුනාගත නොහැකි විය. කරුණාකර "Result Entry" වෙතින් නැවත Save කරන්න.');
       } else {
         const sampleKeys = Object.keys(cleanedReportData[0]);
-        const subjectCols = sampleKeys.filter(k => ![
-          'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
-          'dob', 'dateofbirth', 'birthday', 'upandinaya',
-          'grade', 'term', 'section', 'class', 'classsection', 
-          'rownum', 'total', 'average', 'rank', 'place',
-          '__total', '__numerictotal', '__avg', '__rank'
-        ].includes(k.toLowerCase().replace(/[^a-z0-9]/g, '')));
 
-        const enrichedData = enrichRowsWithRankAndStats(cleanedReportData, subjectCols);
+        // STRICT FILTER: Only keep actual subject columns
+        const pureSubjectCols = sampleKeys.filter((k) => {
+          const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return !SYSTEM_IGNORED_KEYS.includes(cleanK);
+        });
+
+        const enrichedData = enrichRowsWithRankAndStats(cleanedReportData, pureSubjectCols);
 
         setReportRows(enrichedData);
-        setReportAnalytics(calculateAnalytics(cleanedReportData));
+        setReportAnalytics(calculateAnalytics(cleanedReportData, pureSubjectCols));
       }
     } catch (err) {
       console.error('Class sheet fetch error:', err);
@@ -648,14 +636,12 @@ const TeacherUploadPortal = () => {
     return idx.includes(q) || name.includes(q);
   });
 
+  // Strict check on rendered report columns
   const reportSubjectColumns = reportRows.length > 0
-    ? Object.keys(reportRows[0]).filter(k => ![
-        'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
-        'dob', 'dateofbirth', 'birthday', 'upandinaya',
-        'grade', 'term', 'section', 'class', 'classsection', 
-        'rownum', 'total', 'average', 'rank', 'place',
-        '__total', '__numerictotal', '__avg', '__rank'
-      ].includes(k.toLowerCase().replace(/[^a-z0-9]/g, '')))
+    ? Object.keys(reportRows[0]).filter((k) => {
+        const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return !SYSTEM_IGNORED_KEYS.includes(cleanK);
+      })
     : [];
 
   const coreList = getActiveCoreSubjects();
@@ -1026,7 +1012,7 @@ const TeacherUploadPortal = () => {
         </div>
       )}
 
-      {/* TAB 2: CLASS MARK SHEET (CLEANED - NO DUPLICATE STAT COLUMNS) */}
+      {/* TAB 2: CLASS MARK SHEET */}
       {activeTab === 'report' && (
         <div>
           <div className="no-print" style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
