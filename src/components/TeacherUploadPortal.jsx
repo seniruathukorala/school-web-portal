@@ -135,7 +135,7 @@ const TeacherUploadPortal = () => {
 
       rows.forEach((row) => {
         const val = row[subj];
-        if (val !== undefined && val !== null && String(val).trim() !== '') {
+        if (val !== undefined && val !== null && String(val).trim() !== '' && String(val).trim() !== '-') {
           const cleanStr = String(val).trim().toLowerCase();
           if (cleanStr === 'ab') {
             below40++;
@@ -179,7 +179,7 @@ const TeacherUploadPortal = () => {
 
       subjectCols.forEach((subj) => {
         const val = row[subj];
-        if (val !== undefined && val !== null && String(val).trim() !== '') {
+        if (val !== undefined && val !== null && String(val).trim() !== '' && String(val).trim() !== '-') {
           const cleanStr = String(val).trim().toLowerCase();
           attemptedCount++;
           hasValidMarks = true;
@@ -628,17 +628,54 @@ const TeacherUploadPortal = () => {
       if (cleanedReportData.length === 0) {
         setReportError('ශිෂ්‍ය දත්ත හඳුනාගත නොහැකි විය. කරුණාකර "Result Entry" වෙතින් නැවත Save කරන්න.');
       } else {
-        const sampleKeys = Object.keys(cleanedReportData[0]);
+        // --- O/L (Grade 10/11) Basket Consolidation ---
+        if (category === 'ol') {
+          const olCore = SUBJECT_CONFIG.ol.core;
+          const b1List = SUBJECT_CONFIG.ol.basket1.map(s => s.toLowerCase().replace(/[^a-z0-9]/g, ''));
+          const b2List = SUBJECT_CONFIG.ol.basket2.map(s => s.toLowerCase().replace(/[^a-z0-9]/g, ''));
+          const b3List = SUBJECT_CONFIG.ol.basket3.map(s => s.toLowerCase().replace(/[^a-z0-9]/g, ''));
 
-        const pureSubjectCols = sampleKeys.filter((k) => {
-          const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
-          return !SYSTEM_IGNORED_KEYS.includes(cleanK);
-        });
+          const consolidatedData = cleanedReportData.map(row => {
+            const newRow = { ...row };
+            let b1Mark = '';
+            let b2Mark = '';
+            let b3Mark = '';
 
-        const enrichedData = enrichRowsWithRankAndStats(cleanedReportData, pureSubjectCols);
+            Object.keys(row).forEach(k => {
+              const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+              const val = row[k];
+              if (val !== undefined && val !== null && String(val).trim() !== '') {
+                if (b1List.includes(cleanK)) b1Mark = val;
+                else if (b2List.includes(cleanK)) b2Mark = val;
+                else if (b3List.includes(cleanK)) b3Mark = val;
+              }
+            });
 
-        setReportRows(enrichedData);
-        setReportAnalytics(calculateAnalytics(cleanedReportData, pureSubjectCols));
+            newRow['කාණ්ඩය 1'] = b1Mark !== '' ? b1Mark : '-';
+            newRow['කාණ්ඩය 2'] = b2Mark !== '' ? b2Mark : '-';
+            newRow['කාණ්ඩය 3'] = b3Mark !== '' ? b3Mark : '-';
+
+            return newRow;
+          });
+
+          const olSubjectCols = [...olCore, 'කාණ්ඩය 1', 'කාණ්ඩය 2', 'කාණ්ඩය 3'];
+          const enrichedData = enrichRowsWithRankAndStats(consolidatedData, olSubjectCols);
+
+          setReportRows(enrichedData);
+          setReportAnalytics(calculateAnalytics(consolidatedData, olSubjectCols));
+        } else {
+          // --- Junior (Grade 6-9) & A/L: Normal Flow ---
+          const sampleKeys = Object.keys(cleanedReportData[0]);
+          const pureSubjectCols = sampleKeys.filter((k) => {
+            const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return !SYSTEM_IGNORED_KEYS.includes(cleanK);
+          });
+
+          const enrichedData = enrichRowsWithRankAndStats(cleanedReportData, pureSubjectCols);
+
+          setReportRows(enrichedData);
+          setReportAnalytics(calculateAnalytics(cleanedReportData, pureSubjectCols));
+        }
       }
     } catch (err) {
       console.error('Class sheet fetch error:', err);
@@ -660,10 +697,13 @@ const TeacherUploadPortal = () => {
   });
 
   const reportSubjectColumns = reportRows.length > 0
-    ? Object.keys(reportRows[0]).filter((k) => {
-        const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return !SYSTEM_IGNORED_KEYS.includes(cleanK);
-      })
+    ? (category === 'ol'
+        ? [...SUBJECT_CONFIG.ol.core, 'කාණ්ඩය 1', 'කාණ්ඩය 2', 'කාණ්ඩය 3']
+        : Object.keys(reportRows[0]).filter((k) => {
+            const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return !SYSTEM_IGNORED_KEYS.includes(cleanK);
+          })
+      )
     : [];
 
   const coreList = getActiveCoreSubjects();
