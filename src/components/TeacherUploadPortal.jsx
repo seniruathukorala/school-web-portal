@@ -54,7 +54,6 @@ const TeacherUploadPortal = () => {
   const [reportFileUrl, setReportFileUrl] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fixed Missing Styles
   const inputControlStyle = {
     width: '100%',
     padding: '10px 14px',
@@ -123,7 +122,8 @@ const TeacherUploadPortal = () => {
       'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
       'dob', 'dateofbirth', 'birthday', 'upandinaya',
       'grade', 'term', 'section', 'class', 'classsection', 
-      'rownum', 'total', 'average', 'rank', 'place'
+      'rownum', 'total', 'average', 'rank', 'place',
+      '__total', '__numerictotal', '__avg', '__rank'
     ];
 
     const subjectKeys = Object.keys(rows[0]).filter(
@@ -620,7 +620,8 @@ const TeacherUploadPortal = () => {
           'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
           'dob', 'dateofbirth', 'birthday', 'upandinaya',
           'grade', 'term', 'section', 'class', 'classsection', 
-          'rownum', 'total', 'average', 'rank', 'place'
+          'rownum', 'total', 'average', 'rank', 'place',
+          '__total', '__numerictotal', '__avg', '__rank'
         ].includes(k.toLowerCase().replace(/[^a-z0-9]/g, '')));
 
         const enrichedData = enrichRowsWithRankAndStats(cleanedReportData, subjectCols);
@@ -653,13 +654,12 @@ const TeacherUploadPortal = () => {
         'dob', 'dateofbirth', 'birthday', 'upandinaya',
         'grade', 'term', 'section', 'class', 'classsection', 
         'rownum', 'total', 'average', 'rank', 'place',
-        '__total', '__numericTotal', '__avg', '__rank'
+        '__total', '__numerictotal', '__avg', '__rank'
       ].includes(k.toLowerCase().replace(/[^a-z0-9]/g, '')))
     : [];
 
   const coreList = getActiveCoreSubjects();
 
-  // --- VIEW 1: Password Gatekeeper ---
   if (!isAuthenticated) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '65vh', padding: '20px', fontFamily: 'Segoe UI, Roboto, sans-serif' }}>
@@ -693,7 +693,6 @@ const TeacherUploadPortal = () => {
     );
   }
 
-  // --- VIEW 2: Dashboard with Full Width & High Contrast ---
   return (
     <div style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '16px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '1.5px solid #cbd5e1', fontFamily: 'Segoe UI, Roboto, sans-serif', color: '#0f172a', boxSizing: 'border-box' }}>
       
@@ -1027,7 +1026,7 @@ const TeacherUploadPortal = () => {
         </div>
       )}
 
-      {/* TAB 2: CLASS MARK SHEET */}
+      {/* TAB 2: CLASS MARK SHEET (CLEANED - NO DUPLICATE STAT COLUMNS) */}
       {activeTab === 'report' && (
         <div>
           <div className="no-print" style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
@@ -1092,9 +1091,9 @@ const TeacherUploadPortal = () => {
                       {reportSubjectColumns.map((col) => (
                         <th key={col} style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#0f172a', fontWeight: '800' }}>{col}</th>
                       ))}
-                      <th style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '65px', fontWeight: '800' }}>එකතුව</th>
-                      <th style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '65px', fontWeight: '800' }}>සාමාන්‍යය</th>
-                      <th style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#1d4ed8', backgroundColor: '#eff6ff', width: '60px', fontWeight: '900' }}>ස්ථානය</th>
+                      <th style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '70px', fontWeight: '800' }}>එකතුව</th>
+                      <th style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '70px', fontWeight: '800' }}>සාමාන්‍යය</th>
+                      <th style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#1d4ed8', backgroundColor: '#eff6ff', width: '65px', fontWeight: '900' }}>ස්ථානය</th>
                     </tr>
                   </thead>
                   <tbody>
