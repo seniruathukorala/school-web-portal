@@ -123,20 +123,6 @@ const TeacherUploadPortal = () => {
     'numerictotal', 'avg', '__total', '__numerictotal', '__avg', '__rank'
   ];
 
-  const getColumnDisplayName = (col) => {
-    const c = col.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (['commerce', 'geography', 'civics', 'tamil', 'french', 'basket1', 'kandaya1'].includes(c)) {
-      return 'කාණ්ඩය 1';
-    }
-    if (['art', 'music', 'dancing', 'drama', 'englishlit', 'sinhalalit', 'basket2', 'kandaya2'].includes(c)) {
-      return 'කාණ්ඩය 2';
-    }
-    if (['ict', 'agriculture', 'health', 'homescience', 'technical', 'agri', 'basket3', 'kandaya3'].includes(c)) {
-      return 'කාණ්ඩය 3';
-    }
-    return col;
-  };
-
   const calculateAnalytics = (rows, validSubjects) => {
     if (!rows || rows.length === 0 || !validSubjects || validSubjects.length === 0) return {};
 
@@ -189,14 +175,13 @@ const TeacherUploadPortal = () => {
     const calculatedRows = rows.map((row) => {
       let total = 0;
       let hasValidMarks = false;
-      let studentSubjectCount = 0;
+      let attemptedCount = 0;
 
       subjectCols.forEach((subj) => {
         const val = row[subj];
         if (val !== undefined && val !== null && String(val).trim() !== '') {
           const cleanStr = String(val).trim().toLowerCase();
-          
-          studentSubjectCount++;
+          attemptedCount++;
           hasValidMarks = true;
 
           if (cleanStr !== 'ab') {
@@ -208,10 +193,7 @@ const TeacherUploadPortal = () => {
         }
       });
 
-      const divisor = studentSubjectCount > 0 
-        ? Math.min(studentSubjectCount, expectedSubjectCount) 
-        : expectedSubjectCount;
-
+      const divisor = attemptedCount > 0 ? Math.min(attemptedCount, expectedSubjectCount) : expectedSubjectCount;
       const avg = hasValidMarks ? (total / divisor).toFixed(2) : '0.00';
 
       return {
@@ -1116,7 +1098,7 @@ const TeacherUploadPortal = () => {
                       <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', width: '95px', color: '#0f172a', fontWeight: '800' }}>උපන් දිනය</th>
                       {reportSubjectColumns.map((col) => (
                         <th key={col} style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#0f172a', fontWeight: '800' }}>
-                          {getColumnDisplayName(col)}
+                          {col}
                         </th>
                       ))}
                       <th style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '70px', fontWeight: '800' }}>එකතුව</th>
@@ -1138,19 +1120,9 @@ const TeacherUploadPortal = () => {
                         </td>
                         {reportSubjectColumns.map((col) => {
                           const val = row[col];
-                          const isBasket = ['කාණ්ඩය 1', 'කාණ්ඩය 2', 'කාණ්ඩය 3'].includes(getColumnDisplayName(col));
                           return (
                             <td key={col} style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '600', color: val === 'Ab' ? '#dc2626' : '#0f172a' }}>
-                              {val !== undefined && val !== null && String(val).trim() !== '' ? (
-                                isBasket ? (
-                                  <div>
-                                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: '500' }}>{col}</span>
-                                    <span>{String(val)}</span>
-                                  </div>
-                                ) : (
-                                  String(val)
-                                )
-                              ) : '-'}
+                              {val !== undefined && val !== null && String(val).trim() !== '' ? String(val) : '-'}
                             </td>
                           );
                         })}
