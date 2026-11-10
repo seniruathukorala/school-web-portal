@@ -313,6 +313,10 @@ const TeacherUploadPortal = () => {
   const mapJsonToTableRows = (jsonData, isCopyingPrevTerm = false) => {
     const coreList = getActiveCoreSubjects();
 
+    const b1Config = SUBJECT_CONFIG.ol.basket1.map(s => s.toLowerCase().replace(/[^a-z0-9]/g, ''));
+    const b2Config = SUBJECT_CONFIG.ol.basket2.map(s => s.toLowerCase().replace(/[^a-z0-9]/g, ''));
+    const b3Config = SUBJECT_CONFIG.ol.basket3.map(s => s.toLowerCase().replace(/[^a-z0-9]/g, ''));
+
     return jsonData.map((row) => {
       let idx = '';
       let name = '';
@@ -343,7 +347,7 @@ const TeacherUploadPortal = () => {
 
         if (!SYSTEM_IGNORED_KEYS.includes(cleanCol)) {
           const rawVal = row[col];
-          const markVal = isCopyingPrevTerm ? '' : (rawVal !== '' ? String(rawVal) : '');
+          const markVal = isCopyingPrevTerm ? '' : (rawVal !== undefined && rawVal !== null && rawVal !== '' ? String(rawVal) : '');
 
           const matchedCore = coreList.find(
             c => c.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanCol
@@ -352,9 +356,19 @@ const TeacherUploadPortal = () => {
           if (matchedCore) {
             coreMarks[matchedCore] = markVal;
           } else {
-            if (!baskets.b1.sub) baskets.b1 = { sub: col, mark: markVal };
-            else if (!baskets.b2.sub) baskets.b2 = { sub: col, mark: markVal };
-            else if (!baskets.b3.sub) baskets.b3 = { sub: col, mark: markVal };
+            if (category === 'junior') {
+              if (markVal !== '' || !baskets.b1.sub) {
+                baskets.b1 = { sub: col, mark: markVal };
+              }
+            } else if (category === 'ol') {
+              if (b1Config.includes(cleanCol)) {
+                baskets.b1 = { sub: col, mark: markVal };
+              } else if (b2Config.includes(cleanCol)) {
+                baskets.b2 = { sub: col, mark: markVal };
+              } else if (b3Config.includes(cleanCol)) {
+                baskets.b3 = { sub: col, mark: markVal };
+              }
+            }
           }
         }
       });
@@ -628,7 +642,6 @@ const TeacherUploadPortal = () => {
       if (cleanedReportData.length === 0) {
         setReportError('ශිෂ්‍ය දත්ත හඳුනාගත නොහැකි විය. කරුණාකර "Result Entry" වෙතින් නැවත Save කරන්න.');
       } else {
-        // --- O/L (Grade 10/11) Basket Consolidation ---
         if (category === 'ol') {
           const olCore = SUBJECT_CONFIG.ol.core;
           const b1List = SUBJECT_CONFIG.ol.basket1.map(s => s.toLowerCase().replace(/[^a-z0-9]/g, ''));
@@ -664,7 +677,6 @@ const TeacherUploadPortal = () => {
           setReportRows(enrichedData);
           setReportAnalytics(calculateAnalytics(consolidatedData, olSubjectCols));
         } else {
-          // --- Junior (Grade 6-9) & A/L: Normal Flow ---
           const sampleKeys = Object.keys(cleanedReportData[0]);
           const pureSubjectCols = sampleKeys.filter((k) => {
             const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
