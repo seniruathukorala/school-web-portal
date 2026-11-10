@@ -310,6 +310,7 @@ const TeacherUploadPortal = () => {
     }
   };
 
+  // Fixed mapJsonToTableRows: Mark ekak athnam witharak basket slot eka fill wena nisa overwriting wenne na
   const mapJsonToTableRows = (jsonData, isCopyingPrevTerm = false) => {
     const coreList = getActiveCoreSubjects();
 
@@ -347,7 +348,7 @@ const TeacherUploadPortal = () => {
 
         if (!SYSTEM_IGNORED_KEYS.includes(cleanCol)) {
           const rawVal = row[col];
-          const markVal = isCopyingPrevTerm ? '' : (rawVal !== undefined && rawVal !== null && rawVal !== '' ? String(rawVal) : '');
+          const markVal = isCopyingPrevTerm ? '' : (rawVal !== undefined && rawVal !== null && String(rawVal).trim() !== '' ? String(rawVal).trim() : '');
 
           const matchedCore = coreList.find(
             c => c.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanCol
@@ -356,16 +357,19 @@ const TeacherUploadPortal = () => {
           if (matchedCore) {
             coreMarks[matchedCore] = markVal;
           } else {
+            // Grade 6-9 Junior Aesthetics (Una subject ekata adala mark eka gannawa)
             if (category === 'junior') {
               if (markVal !== '' || !baskets.b1.sub) {
                 baskets.b1 = { sub: col, mark: markVal };
               }
-            } else if (category === 'ol') {
-              if (b1Config.includes(cleanCol)) {
+            } 
+            // Grade 10-11 O/L Baskets (Empty columns walin overwrite nowee, mark thiyena subject eka select wenawa)
+            else if (category === 'ol') {
+              if (b1Config.includes(cleanCol) && (markVal !== '' || !baskets.b1.sub)) {
                 baskets.b1 = { sub: col, mark: markVal };
-              } else if (b2Config.includes(cleanCol)) {
+              } else if (b2Config.includes(cleanCol) && (markVal !== '' || !baskets.b2.sub)) {
                 baskets.b2 = { sub: col, mark: markVal };
-              } else if (b3Config.includes(cleanCol)) {
+              } else if (b3Config.includes(cleanCol) && (markVal !== '' || !baskets.b3.sub)) {
                 baskets.b3 = { sub: col, mark: markVal };
               }
             }
@@ -642,6 +646,7 @@ const TeacherUploadPortal = () => {
       if (cleanedReportData.length === 0) {
         setReportError('ශිෂ්‍ය දත්ත හඳුනාගත නොහැකි විය. කරුණාකර "Result Entry" වෙතින් නැවත Save කරන්න.');
       } else {
+        // O/L Report: Consolidation into clean "කාණ්ඩය 1", "කාණ්ඩය 2", "කාණ්ඩය 3"
         if (category === 'ol') {
           const olCore = SUBJECT_CONFIG.ol.core;
           const b1List = SUBJECT_CONFIG.ol.basket1.map(s => s.toLowerCase().replace(/[^a-z0-9]/g, ''));
@@ -677,6 +682,7 @@ const TeacherUploadPortal = () => {
           setReportRows(enrichedData);
           setReportAnalytics(calculateAnalytics(consolidatedData, olSubjectCols));
         } else {
+          // Grade 6-9 (Junior) & A/L: Normal individual subject columns
           const sampleKeys = Object.keys(cleanedReportData[0]);
           const pureSubjectCols = sampleKeys.filter((k) => {
             const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
