@@ -171,27 +171,39 @@ const TeacherUploadPortal = () => {
   const enrichRowsWithRankAndStats = (rows, subjectCols) => {
     if (!rows || rows.length === 0) return [];
 
+    // Grade anuwa expected subject count eka
+    const expectedSubjectCount = category === 'junior' ? 11 : (category === 'ol' ? 9 : 3);
+
     const calculatedRows = rows.map((row) => {
       let total = 0;
       let hasValidMarks = false;
+      let studentSubjectCount = 0;
 
       subjectCols.forEach((subj) => {
         const val = row[subj];
         if (val !== undefined && val !== null && String(val).trim() !== '') {
           const cleanStr = String(val).trim().toLowerCase();
+          
+          // Mark ekak hari 'Ab' hari thiyenawanam subject ekak widiyata count karanawa
+          studentSubjectCount++;
+          hasValidMarks = true;
+
           if (cleanStr !== 'ab') {
             const num = Number(cleanStr);
             if (!isNaN(num)) {
               total += num;
-              hasValidMarks = true;
             }
-          } else {
-            hasValidMarks = true;
           }
+          // 'ab' nam total ekata 0 ekathu wenne (total wenas wenne na, count eka wadi wenawa)
         }
       });
 
-      const avg = subjectCols.length > 0 ? (total / subjectCols.length).toFixed(2) : '0.00';
+      // Lamayata adala subjects count eka (junior nam 11, ol nam 9) hari attempt karapu count eka
+      const divisor = studentSubjectCount > 0 
+        ? Math.min(studentSubjectCount, expectedSubjectCount) 
+        : expectedSubjectCount;
+
+      const avg = hasValidMarks ? (total / divisor).toFixed(2) : '0.00';
 
       return {
         ...row,
@@ -213,58 +225,6 @@ const TeacherUploadPortal = () => {
         __rank: rank
       };
     });
-  };
-
-  const createBlankRow = () => ({
-    id: Date.now() + Math.random(),
-    indexNo: '',
-    name: '',
-    dob: '',
-    coreMarks: {},
-    baskets: {
-      b1: { sub: '', mark: '' },
-      b2: { sub: '', mark: '' },
-      b3: { sub: '', mark: '' }
-    }
-  });
-
-  const formatMarkValue = (val) => {
-    if (val === undefined || val === null || String(val).trim() === '') return '';
-    const cleanStr = String(val).trim();
-    if (cleanStr.toLowerCase() === 'ab') return 'Ab';
-    const num = Number(cleanStr);
-    return isNaN(num) ? cleanStr : num;
-  };
-
-  const getSanityQueryAndParams = (targetTerm) => {
-    const numGrade = grade.replace(/\D/g, '').trim();
-    const cleanSection = classSection.trim();
-    const cleanGradeStr = grade.toLowerCase().replace(/\s+/g, '');
-    const cleanTermStr = targetTerm.toLowerCase().replace(/\s+/g, '');
-    const uniqueDocId = `result-${year}-${cleanTermStr}-${cleanGradeStr}-${cleanSection.toLowerCase()}`;
-
-    const query = `*[_type == "resultSheet" && (_id == $uniqueDocId || (term == $targetTerm && (grade == $grade || grade == $shortGrade || grade == $pureGrade) && (classSection == $section || classSection == $fullSection || classSection == $dashSection)))][0]{
-      _id,
-      title,
-      year,
-      grade,
-      term,
-      classSection,
-      "fileUrl": file.asset->url
-    }`;
-
-    const params = {
-      uniqueDocId,
-      targetTerm,
-      grade: grade,
-      shortGrade: `Grade ${numGrade}`,
-      pureGrade: numGrade,
-      section: cleanSection,
-      fullSection: `${numGrade}-${cleanSection}`,
-      dashSection: `${numGrade} - ${cleanSection}`
-    };
-
-    return { query, params };
   };
 
   const fetchSheetData = async (targetTerm) => {
