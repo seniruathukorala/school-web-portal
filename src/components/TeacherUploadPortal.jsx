@@ -115,7 +115,6 @@ const TeacherUploadPortal = () => {
     }
   };
 
-  // Ignored keys array used across functions
   const SYSTEM_IGNORED_KEYS = [
     'studentname', 'name', 'nama', 'indexno', 'index', 'admissionno', 'athulathankaya',
     'dob', 'dateofbirth', 'birthday', 'upandinaya',
@@ -123,6 +122,20 @@ const TeacherUploadPortal = () => {
     'rownum', 'total', 'average', 'rank', 'place',
     'numerictotal', 'avg', '__total', '__numerictotal', '__avg', '__rank'
   ];
+
+  const getColumnDisplayName = (col) => {
+    const c = col.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (['commerce', 'geography', 'civics', 'tamil', 'french', 'basket1', 'kandaya1'].includes(c)) {
+      return 'කාණ්ඩය 1';
+    }
+    if (['art', 'music', 'dancing', 'drama', 'englishlit', 'sinhalalit', 'basket2', 'kandaya2'].includes(c)) {
+      return 'කාණ්ඩය 2';
+    }
+    if (['ict', 'agriculture', 'health', 'homescience', 'technical', 'agri', 'basket3', 'kandaya3'].includes(c)) {
+      return 'කාණ්ඩය 3';
+    }
+    return col;
+  };
 
   const calculateAnalytics = (rows, validSubjects) => {
     if (!rows || rows.length === 0 || !validSubjects || validSubjects.length === 0) return {};
@@ -171,7 +184,6 @@ const TeacherUploadPortal = () => {
   const enrichRowsWithRankAndStats = (rows, subjectCols) => {
     if (!rows || rows.length === 0) return [];
 
-    // Grade anuwa expected subject count eka
     const expectedSubjectCount = category === 'junior' ? 11 : (category === 'ol' ? 9 : 3);
 
     const calculatedRows = rows.map((row) => {
@@ -184,7 +196,6 @@ const TeacherUploadPortal = () => {
         if (val !== undefined && val !== null && String(val).trim() !== '') {
           const cleanStr = String(val).trim().toLowerCase();
           
-          // Mark ekak hari 'Ab' hari thiyenawanam subject ekak widiyata count karanawa
           studentSubjectCount++;
           hasValidMarks = true;
 
@@ -194,11 +205,9 @@ const TeacherUploadPortal = () => {
               total += num;
             }
           }
-          // 'ab' nam total ekata 0 ekathu wenne (total wenas wenne na, count eka wadi wenawa)
         }
       });
 
-      // Lamayata adala subjects count eka (junior nam 11, ol nam 9) hari attempt karapu count eka
       const divisor = studentSubjectCount > 0 
         ? Math.min(studentSubjectCount, expectedSubjectCount) 
         : expectedSubjectCount;
@@ -225,6 +234,79 @@ const TeacherUploadPortal = () => {
         __rank: rank
       };
     });
+  };
+
+  const createBlankRow = () => ({
+    id: Date.now() + Math.random(),
+    indexNo: '',
+    name: '',
+    dob: '',
+    coreMarks: {},
+    baskets: {
+      b1: { sub: '', mark: '' },
+      b2: { sub: '', mark: '' },
+      b3: { sub: '', mark: '' }
+    }
+  });
+
+  const formatMarkValue = (val) => {
+    if (val === undefined || val === null || String(val).trim() === '') return '';
+    const cleanStr = String(val).trim();
+    if (cleanStr.toLowerCase() === 'ab') return 'Ab';
+    const num = Number(cleanStr);
+    return isNaN(num) ? cleanStr : num;
+  };
+
+  const getSanityQueryAndParams = (targetTerm) => {
+    const numGrade = grade.replace(/\D/g, '').trim();
+    const cleanSection = classSection.trim();
+    const cleanGradeStr = grade.toLowerCase().replace(/\s+/g, '');
+    const cleanTermStr = targetTerm.toLowerCase().replace(/\s+/g, '');
+    const uniqueDocId = `result-${year}-${cleanTermStr}-${cleanGradeStr}-${cleanSection.toLowerCase()}`;
+
+    const query = `*[_type == "resultSheet" && (
+      _id == $uniqueDocId ||
+      _id == $draftDocId ||
+      (
+        (year == $year || year == $numYear) &&
+        lower(term) == lower($targetTerm) &&
+        (
+          grade == $grade ||
+          grade == $shortGrade ||
+          grade == $pureGrade ||
+          grade == $numYear
+        ) &&
+        (
+          lower(classSection) == lower($section) ||
+          lower(classSection) == lower($fullSection) ||
+          lower(classSection) == lower($dashSection)
+        )
+      )
+    )][0]{
+      _id,
+      title,
+      year,
+      grade,
+      term,
+      classSection,
+      "fileUrl": file.asset->url
+    }`;
+
+    const params = {
+      uniqueDocId,
+      draftDocId: `drafts.${uniqueDocId}`,
+      year: String(year),
+      numYear: parseInt(year, 10) || 2026,
+      targetTerm,
+      grade,
+      shortGrade: `Grade ${numGrade}`,
+      pureGrade: numGrade,
+      section: cleanSection,
+      fullSection: `${numGrade}-${cleanSection}`,
+      dashSection: `${numGrade} - ${cleanSection}`
+    };
+
+    return { query, params };
   };
 
   const fetchSheetData = async (targetTerm) => {
@@ -566,7 +648,6 @@ const TeacherUploadPortal = () => {
       } else {
         const sampleKeys = Object.keys(cleanedReportData[0]);
 
-        // STRICT FILTER: Only keep actual subject columns
         const pureSubjectCols = sampleKeys.filter((k) => {
           const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
           return !SYSTEM_IGNORED_KEYS.includes(cleanK);
@@ -596,7 +677,6 @@ const TeacherUploadPortal = () => {
     return idx.includes(q) || name.includes(q);
   });
 
-  // Strict check on rendered report columns
   const reportSubjectColumns = reportRows.length > 0
     ? Object.keys(reportRows[0]).filter((k) => {
         const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -1035,7 +1115,9 @@ const TeacherUploadPortal = () => {
                       <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', textAlign: 'left', minWidth: '140px', color: '#0f172a', fontWeight: '800' }}>නම</th>
                       <th style={{ padding: '10px 8px', border: '1px solid #cbd5e1', width: '95px', color: '#0f172a', fontWeight: '800' }}>උපන් දිනය</th>
                       {reportSubjectColumns.map((col) => (
-                        <th key={col} style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#0f172a', fontWeight: '800' }}>{col}</th>
+                        <th key={col} style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#0f172a', fontWeight: '800' }}>
+                          {getColumnDisplayName(col)}
+                        </th>
                       ))}
                       <th style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '70px', fontWeight: '800' }}>එකතුව</th>
                       <th style={{ padding: '10px 6px', border: '1px solid #cbd5e1', color: '#0f172a', backgroundColor: '#f1f5f9', width: '70px', fontWeight: '800' }}>සාමාන්‍යය</th>
@@ -1054,11 +1136,24 @@ const TeacherUploadPortal = () => {
                         <td style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontSize: '0.8rem', color: '#334155' }}>
                           {row['DOB'] || row.dob || row.dateofbirth || row.birthday || '-'}
                         </td>
-                        {reportSubjectColumns.map((col) => (
-                          <td key={col} style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '600', color: row[col] === 'Ab' ? '#dc2626' : '#0f172a' }}>
-                            {String(row[col] ?? '-')}
-                          </td>
-                        ))}
+                        {reportSubjectColumns.map((col) => {
+                          const val = row[col];
+                          const isBasket = ['කාණ්ඩය 1', 'කාණ්ඩය 2', 'කාණ්ඩය 3'].includes(getColumnDisplayName(col));
+                          return (
+                            <td key={col} style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '600', color: val === 'Ab' ? '#dc2626' : '#0f172a' }}>
+                              {val !== undefined && val !== null && String(val).trim() !== '' ? (
+                                isBasket ? (
+                                  <div>
+                                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: '500' }}>{col}</span>
+                                    <span>{String(val)}</span>
+                                  </div>
+                                ) : (
+                                  String(val)
+                                )
+                              ) : '-'}
+                            </td>
+                          );
+                        })}
                         <td style={{ padding: '8px 6px', border: '1px solid #cbd5e1', fontWeight: '800', backgroundColor: '#f8fafc', color: '#0f172a' }}>
                           {row.__total}
                         </td>
