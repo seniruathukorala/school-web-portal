@@ -6,10 +6,10 @@ import Navbar from './components/Navbar';
 import principalImg from './assets/principal.jpg';
 import anthemAudio from './assets/anthem.mp3';
 import ResultsChecker from './components/ResultsChecker';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function App() {
-  // 1. Navigation state: 'home', 'portal', ɔ 'teacher'
+  // 1. Navigation state: 'home', 'portal', or 'teacher'
   const [currentView, setCurrentView] = useState('home');
 
   const [notices, setNotices] = useState([]);
@@ -71,19 +71,19 @@ export default function App() {
   // 2. Student Portal view
   if (currentView === 'portal') {
     return (
-      <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '30px 20px' }}>
-        <div style={{ maxWidth: '600px', margin: '0 auto 15px auto' }}>
+      <div style={{ minHeight: '100vh', background: '#fdf8f6', padding: '30px 20px' }}>
+        <div style={{ maxWidth: '650px', margin: '0 auto 15px auto' }}>
           <button
             onClick={() => setCurrentView('home')}
             style={{
-              padding: '8px 16px',
-              background: '#1e293b',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
+              padding: '10px 18px',
+              background: '#450a11',
+              color: '#facc15',
+              border: '1px solid #eab308',
+              borderRadius: '999px',
               cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '0.9rem'
+              fontWeight: '700',
+              fontSize: '0.88rem'
             }}
           >
             ← Back to School Website
@@ -97,19 +97,19 @@ export default function App() {
   // 3. Teacher Upload Portal view
   if (currentView === 'teacher') {
     return (
-      <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '30px 20px' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto 15px auto' }}>
+      <div style={{ minHeight: '100vh', background: '#fdf8f6', padding: '30px 20px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto 15px auto' }}>
           <button
             onClick={() => setCurrentView('home')}
             style={{
-              padding: '8px 16px',
-              background: '#1e293b',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
+              padding: '10px 18px',
+              background: '#450a11',
+              color: '#facc15',
+              border: '1px solid #eab308',
+              borderRadius: '999px',
               cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '0.9rem'
+              fontWeight: '700',
+              fontSize: '0.88rem'
             }}
           >
             ← Back to School Website
@@ -123,346 +123,277 @@ export default function App() {
   // 4. Normal School Homepage
   return (
     <div>
-      {/* Navbar we gɛt links fɔ Student Portal & Teacher Portal */}
       <Navbar 
         onOpenPortal={() => setCurrentView('portal')} 
         onOpenTeacherPortal={() => setCurrentView('teacher')} 
       />
 
-     
-
-{/* Hero Section */}
-<section 
-  id="home" 
-  className="hero"
-  style={
-    hero?.bannerImage 
-      ? { backgroundImage: `url(${urlFor(hero.bannerImage).width(1920).url()})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-      : {}
-  }
->
-  <div className="hero-overlay"></div>
-  
-  <div className="hero-content">
-    {/* 1. Main Title - Drops down with a smooth fade */}
-    <motion.h2
-      initial={{ opacity: 0, y: -30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-    >
-      {hero?.title || "දැනුමෙන් සපිරි හෙට දවසක් උදෙසා"}
-    </motion.h2>
-
-    {/* 2. Motto - Fades in softly from bottom */}
-    <motion.p 
-      className="motto"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: 0.25, ease: "easeOut" }}
-    >
-      {hero?.motto || "විද්‍යා දදාති විනයං"}
-    </motion.p>
-
-    {/* 3. Button - Scales up smoothly with tap & hover micro-interactions */}
-    <motion.a 
-      href="#about" 
-      className="btn"
-      initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
-      whileHover={{ 
-        scale: 1.06, 
-        boxShadow: "0 8px 24px rgba(2, 132, 199, 0.45)" 
-      }}
-      whileTap={{ scale: 0.95 }}
-      style={{ display: 'inline-block' }}
-    >
-      {hero?.buttonText || "තවත් විස්තර"}
-    </motion.a>
-  </div>
-</section>
-
-
-{/* About Section */}
-<section id="about" className="section">
-  <div className="container">
-    {/* 1. ප්‍රධාන මාතෘකාව (Section Title) - Scroll වෙද්දි උඩින් පහළට Fade-in වීම */}
-    <motion.h2 
-      className="section-title"
-      initial={{ opacity: 0, y: -25 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-    >
-      {about?.title || "පාසල පිළිබඳ කෙටියෙන්"}
-    </motion.h2>
-
-    <div className="about-grid">
-      <div className="about-text">
-        {/* 2. හැඳින්වීම් ඡේදය (Description) - සුමටව Fade-in වීම */}
-        <motion.p
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-        >
-          {about?.description ||
-            "අප පාසල දශක ගණනාවක අභිමානවත් ඉතිහාසයකට උරුමකම් කියන, ගුණගරුක හා දක්ෂ දරු පරපුරක් දැයට දායාද කරන ප්‍රමුඛ පෙළේ පාසලකි."}
-        </motion.p>
-
-        {/* 3. දැක්ම සහ මෙහෙවර (Vision & Mission Cards) */}
-        <div className="vision-mission">
-          {/* Vision Card - වම් පැත්තේ සිට Slide වෙමින් පැමිණීම & Hover Effect */}
-          <motion.div 
-            className="card"
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-            whileHover={{ y: -6, boxShadow: "0 12px 25px rgba(0, 0, 0, 0.08)" }}
+      {/* Hero Section */}
+      <section 
+        id="home" 
+        className="hero"
+        style={
+          hero?.bannerImage 
+            ? { backgroundImage: `url(${urlFor(hero.bannerImage).width(1920).url()})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : {}
+        }
+      >
+        <div className="hero-overlay"></div>
+        
+        <div className="hero-content">
+          <motion.h2
+            initial={{ opacity: 0, y: -25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <h3>අපගේ දැක්ම (Vision)</h3>
-            <p>
-              {about?.vision ||
-                "දැනුමෙන් හා යහපත් ආකල්පවලින් පිරිපුන් විශිෂ්ටතම ශ්‍රී ලාංකීය පුරවැසියෙකු බිහිකිරීම."}
-            </p>
-          </motion.div>
+            {hero?.title || "දැනුමෙන් සපිරි හෙට දවසක් උදෙසා"}
+          </motion.h2>
 
-          {/* Mission Card - දකුණු පැත්තේ සිට Slide වෙමින් පැමිණීම & Hover Effect */}
-          <motion.div 
-            className="card"
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
-            whileHover={{ y: -6, boxShadow: "0 12px 25px rgba(0, 0, 0, 0.08)" }}
+          <motion.p 
+            className="motto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.25, ease: "easeOut" }}
           >
-            <h3>අපගේ මෙහෙවර (Mission)</h3>
-            <p>
-              {about?.mission ||
-                "ගුණාත්මක අධ්‍යාපනයක් හා සමබර පෞරුෂ සංවර්ධනයක් තුළින් ගෝලීය අභියෝග ජයගත හැකි නිපුණතා සපිරි දරු පරපුරක් නිර්මාණය කිරීම."}
-            </p>
+            "{hero?.motto || "විද්‍යා දදාති විනයං"}"
+          </motion.p>
+
+          <motion.div
+            className="hero-actions"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.45, ease: "easeOut" }}
+          >
+            <a href="#about" className="btn">
+              {hero?.buttonText || "තවත් විස්තර"}
+            </a>
           </motion.div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
+      </section>
 
-      
+      {/* About Section */}
+      <section id="about" className="section">
+        <div className="container">
+          <motion.h2 
+            className="section-title"
+            initial={{ opacity: 0, y: -25 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            {about?.title || "පාසල පිළිබඳ කෙටියෙන්"}
+          </motion.h2>
 
-{/* Principal's Message */}
-<section id="principal" className="section bg-light">
-  <div className="container">
-    <div className="principal-card">
-      
-      {/* 1. Principal Photo - Left Side Entrance with Subtle Hover Lift */}
-      <motion.div 
-        className="principal-img-box"
-        initial={{ opacity: 0, x: -35 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-      >
-        <motion.img 
-          src={principal?.photo ? urlFor(principal.photo).width(500).url() : principalImg} 
-          alt={principal?.name || "Principal"} 
-          className="principal-img"
-          whileHover={{ scale: 1.025 }}
-          transition={{ duration: 0.3 }}
-        />
-      </motion.div>
+          <div className="about-grid">
+            <div className="about-text">
+              <motion.p
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+              >
+                {about?.description ||
+                  "අප පාසල දශක ගණනාවක අභිමානවත් ඉතිහාසයකට උරුමකම් කියන, ගුණගරුක හා දක්ෂ දරු පරපුරක් දැයට දායාද කරන ප්‍රමුඛ පෙළේ පාසලකි."}
+              </motion.p>
 
-      {/* 2. Message Content Area - Right Side Slide-in */}
-      <motion.div 
-        className="principal-text"
-        initial={{ opacity: 0, x: 35 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.7, delay: 0.15, ease: "easeOut" }}
-      >
-        <div className="principal-header">
-          <h2 className="principal-title">විදුහල්පති පණිවිඩය</h2>
-          {/* Animated Expanding Title Bar */}
-          <motion.div 
-            className="title-bar"
-            initial={{ width: 0 }}
-            whileInView={{ width: '50px' }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
-          />
+              <div className="vision-mission">
+                <motion.div 
+                  className="card"
+                  initial={{ opacity: 0, x: -30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+                >
+                  <h3>🎯 අපගේ දැක්ම (Vision)</h3>
+                  <p>
+                    {about?.vision ||
+                      "දැනුමෙන් හා යහපත් ආකල්පවලින් පිරිපුන් විශිෂ්ටතම ශ්‍රී ලාංකීය පුරවැසියෙකු බිහිකිරීම."}
+                  </p>
+                </motion.div>
+
+                <motion.div 
+                  className="card"
+                  initial={{ opacity: 0, x: 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+                >
+                  <h3>🚀 අපගේ මෙහෙවර (Mission)</h3>
+                  <p>
+                    {about?.mission ||
+                      "ගුණාත්මක අධ්‍යාපනයක් හා සමබර පෞරුෂ සංවර්ධනයක් තුළින් ගෝලීය අභියෝග ජයගත හැකි නිපුණතා සපිරි දරු පරපුරක් නිර්මාණය කිරීම."}
+                  </p>
+                </motion.div>
+              </div>
+            </div>
+          </div>
         </div>
+      </section>
 
-        {/* Message Paragraph */}
-        <motion.p 
-          className="principal-message" 
-          style={{ whiteSpace: 'pre-line' }}
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-        >
-          {principal?.message || "පණිවිඩය පැටවෙමින් පවතී..."}
-        </motion.p>
+      {/* Principal's Message */}
+      <section id="principal" className="section bg-light">
+        <div className="container">
+          <div className="principal-card">
+            <motion.div 
+              className="principal-img-box"
+              initial={{ opacity: 0, x: -35 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            >
+              <motion.img 
+                src={principal?.photo ? urlFor(principal.photo).width(500).url() : principalImg} 
+                alt={principal?.name || "Principal"} 
+                className="principal-img"
+                whileHover={{ scale: 1.025 }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.div>
 
-        {/* Principal Name & Title */}
-        <motion.div 
-          className="principal-name"
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.45, ease: "easeOut" }}
-        >
-          <h4>{principal?.name || "විදුහල්පතිතුමිය"}</h4>
-          <span>{principal?.title || "විදුහල්පති, තක්ෂිලා මහා විද්‍යාලය-හොරණ"}</span>
-        </motion.div>
-      </motion.div>
+            <motion.div 
+              className="principal-text"
+              initial={{ opacity: 0, x: 35 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.7, delay: 0.15, ease: "easeOut" }}
+            >
+              <div className="principal-header">
+                <h2 className="principal-title">විදුහල්පති පණිවිඩය</h2>
+                <motion.div 
+                  className="title-bar"
+                  initial={{ width: 0 }}
+                  whileInView={{ width: '65px' }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
+                />
+              </div>
 
-    </div>
-  </div>
-</section>
+              <motion.p 
+                className="principal-message" 
+                style={{ whiteSpace: 'pre-line' }}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+              >
+                {principal?.message || "පණිවිඩය පැටවෙමින් පවතී..."}
+              </motion.p>
 
-     
+              <motion.div 
+                className="principal-name"
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.45, ease: "easeOut" }}
+              >
+                <h4>{principal?.name || "විදුහල්පතිතුමිය"}</h4>
+                <span>{principal?.title || "විදුහල්පති, තක්ෂිලා මහා විද්‍යාලය-හොරණ"}</span>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
-{/* School Anthem Section */}
-<section id="anthem" className="section anthem-section">
-  <div className="container">
-    {/* 1. Title Fade-down with Scroll Trigger */}
-    <motion.h2 
-      className="section-title"
-      initial={{ opacity: 0, y: -20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-    >
-      {anthem?.title || "පාසල් ගීතය"}
-    </motion.h2>
+      {/* School Anthem Section */}
+      <section id="anthem" className="section anthem-section">
+        <div className="container">
+          <motion.h2 
+            className="section-title"
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            {anthem?.title || "පාසල් ගීතය"}
+          </motion.h2>
 
-    {/* 2. Main Anthem Card - Smooth pop-in */}
-    <motion.div 
-      className="anthem-card"
-      initial={{ opacity: 0, y: 30, scale: 0.98 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-    >
-      {/* Audio Player Box */}
-      {anthem?.audioUrl && (
-        <motion.div 
-          className="anthem-audio-box"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <p>🎧 පාසල් ගීතයට සවන් දෙන්න</p>
-          <audio controls src={anthem.audioUrl}>
-            Your browser does not support the audio element.
-          </audio>
-        </motion.div>
-      )}
+          <motion.div 
+            className="anthem-card"
+            initial={{ opacity: 0, y: 30, scale: 0.98 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            {(anthem?.audioUrl || anthemAudio) && (
+              <motion.div 
+                className="anthem-audio-box"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <p>🎧 පාසල් ගීතයට සවන් දෙන්න</p>
+                <audio controls src={anthem?.audioUrl || anthemAudio}>
+                  Your browser does not support the audio element.
+                </audio>
+              </motion.div>
+            )}
 
-      {/* Lyrics Area with Smooth Animated Height Transition */}
-      <div className="anthem-lyrics">
-        <motion.div 
-          className={`lyrics-wrapper ${showFullLyrics ? "expanded" : "collapsed"}`}
-          animate={{ height: showFullLyrics ? "auto" : "120px" }}
-          transition={{ duration: 0.45, ease: [0.04, 0.62, 0.23, 0.98] }}
-          style={{ overflow: "hidden" }}
-        >
-          <p style={{ whiteSpace: "pre-line" }}>
-            {anthem?.lyrics || "පාසල් ගීතයේ පද පේළි මෙතැන දිස්වේ..."}
-          </p>
-        </motion.div>
+            <div className="anthem-lyrics">
+              <motion.div 
+                className={`lyrics-wrapper ${showFullLyrics ? "expanded" : "collapsed"}`}
+                animate={{ height: showFullLyrics ? "auto" : "140px" }}
+                transition={{ duration: 0.45, ease: [0.04, 0.62, 0.23, 0.98] }}
+              >
+                <p style={{ whiteSpace: "pre-line" }}>
+                  {anthem?.lyrics || "පාසල් ගීතයේ පද පේළි මෙතැන දිස්වේ..."}
+                </p>
+              </motion.div>
 
-        {/* 3. Interactive See More Button */}
-        <motion.button 
-          className="see-more-btn"
-          onClick={() => setShowFullLyrics(!showFullLyrics)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        >
-          {showFullLyrics ? "අඩු කරන්න ▲" : "තව කියවන්න (See More) ▼"}
-        </motion.button>
-      </div>
-    </motion.div>
-  </div>
-</section>
+              <motion.button 
+                className="see-more-btn"
+                onClick={() => setShowFullLyrics(!showFullLyrics)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {showFullLyrics ? "අඩු කරන්න ▲" : "සම්පූර්ණ ගීතය කියවන්න ▼"}
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
       {/* Events Section */}
       <section id="events" className="section">
         <div className="container">
-          <h2 className="section-title text-center" style={{ marginBottom: '30px' }}>පාසල් ඉසව් සහ පුවත්</h2>
-          <div 
-            className="events-grid" 
-            style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', 
-              gap: '30px' 
-            }}
-          >
+          <h2 className="section-title">පාසල් ඉසව් සහ පුවත්</h2>
+          <div className="events-grid">
             {events.map((event) => (
-              <div 
-                key={event._id} 
-                style={{ 
-                  background: '#fff', 
-                  borderRadius: '12px', 
-                  overflow: 'hidden', 
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-                  border: '1px solid #eee'
-                }}
-              >
+              <div key={event._id} className="event-card">
                 {event.coverImage && (
                   <div 
-                    style={{ background: '#f8f9fa', cursor: 'pointer', overflow: 'hidden' }}
+                    className="event-cover-wrap"
                     onClick={() => setSelectedImage(urlFor(event.coverImage).url())}
                   >
                     <img 
                       src={urlFor(event.coverImage).width(900).url()} 
                       alt={event.title} 
-                      style={{ 
-                        width: '100%', 
-                        maxHeight: '380px', 
-                        objectFit: 'contain', 
-                        display: 'block', 
-                        margin: '0 auto' 
-                      }} 
+                      className="event-cover-img"
                     />
                   </div>
                 )}
-                <div style={{ padding: '20px' }}>
-                  <div style={{ fontSize: '0.88rem', color: '#666', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="event-body">
+                  <div className="event-meta">
                     <span>📅 {event.date}</span>
                     {event.location && <span>| 📍 {event.location}</span>}
                   </div>
-                  <h3 style={{ fontSize: '1.35rem', margin: '10px 0', color: '#1a1a1a', fontWeight: 'bold' }}>
-                    {event.title}
-                  </h3>
+                  <h3 className="event-title">{event.title}</h3>
                   {event.description && (
-                    <p style={{ fontSize: '0.95rem', color: '#555', lineHeight: '1.6', marginBottom: '18px' }}>
-                      {event.description}
-                    </p>
+                    <p className="event-desc">{event.description}</p>
                   )}
                   {event.gallery && event.gallery.length > 0 && (
-                    <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #f0f0f0' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#555', fontWeight: '600', display: 'block', marginBottom: '10px' }}>
+                    <div className="event-gallery-box">
+                      <span className="event-gallery-label">
                         📸 තවත් පින්තූර ({event.gallery.length}) - බැලීමට click කරන්න:
                       </span>
-                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      <div className="event-gallery-thumbs">
                         {event.gallery.map((photo, index) => (
                           <img 
                             key={index}
                             src={urlFor(photo).width(250).height(200).url()} 
                             alt={`Gallery ${index}`} 
                             onClick={() => setSelectedImage(urlFor(photo).url())}
-                            style={{ 
-                              width: '95px', 
-                              height: '70px', 
-                              objectFit: 'cover', 
-                              borderRadius: '6px', 
-                              cursor: 'pointer' 
-                            }} 
+                            className="event-thumb"
                           />
                         ))}
                       </div>
@@ -482,7 +413,7 @@ export default function App() {
               left: 0,
               width: '100vw',
               height: '100vh',
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              backgroundColor: 'rgba(28, 4, 7, 0.9)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -496,12 +427,12 @@ export default function App() {
                 onClick={() => setSelectedImage(null)}
                 style={{
                   position: 'absolute',
-                  top: '-40px',
+                  top: '-42px',
                   right: '0',
                   background: 'none',
                   border: 'none',
-                  color: '#fff',
-                  fontSize: '32px',
+                  color: '#facc15',
+                  fontSize: '34px',
                   cursor: 'pointer'
                 }}
               >
@@ -510,7 +441,7 @@ export default function App() {
               <img 
                 src={selectedImage} 
                 alt="Full Preview" 
-                style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: '8px', display: 'block' }} 
+                style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: '10px', border: '2px solid #eab308', display: 'block' }} 
               />
             </div>
           </div>
@@ -518,7 +449,7 @@ export default function App() {
       </section>
 
       {/* Notices Section */}
-      <section id="notices" className="section">
+      <section id="notices" className="section bg-light">
         <div className="container">
           <h2 className="section-title">නවතම පුවත් සහ නිවේදන</h2>
           <div className="notices-grid">

@@ -1,21 +1,57 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import crest from '../assets/logo.jpg';
 import './Nav.css';
 
 export default function Navbar({ onOpenPortal, onOpenTeacherPortal }) {
-  // Navigation Links Data
+  const [activeHref, setActiveHref] = useState('#home');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const navLinks = [
     { title: 'මුල් පිටුව', href: '#home' },
     { title: 'අප ගැන', href: '#about' },
     { title: 'විදුහල්පති පණිවිඩය', href: '#principal' },
+    { title: 'පාසල් ගීතය', href: '#anthem' },
+    { title: 'ඉසව්', href: '#events' },
     { title: 'නිවේදන', href: '#notices' },
     { title: 'සම්බන්ධ වීමට', href: '#contact' },
-    { title: 'පාසල් ගීතය', href: '#anthem' },
   ];
 
+  // Scroll weddi active section eka auto-detect kirima (Page bottom ekata giyama #contact active wenawa)
+  useEffect(() => {
+    const handleScroll = () => {
+      const isAtBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50;
+
+      if (isAtBottom) {
+        setActiveHref('#contact');
+        return;
+      }
+
+      const scrollPos = window.scrollY + 140;
+      for (const link of navLinks) {
+        const el = document.querySelector(link.href);
+        if (el) {
+          const top = el.offsetTop;
+          const height = el.offsetHeight;
+          if (scrollPos >= top && scrollPos < top + height) {
+            setActiveHref(link.href);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleLinkClick = (href) => {
+    setActiveHref(href);
+    setMobileMenuOpen(false);
+  };
+
   return (
-    // 1. Slide down smooth entry animation on initial load
     <motion.header
       className="navbar"
       initial={{ y: -70, opacity: 0 }}
@@ -23,64 +59,133 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal }) {
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
       <div className="nav-container">
-        {/* Logo & School Name */}
-        <div className="logo-area" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* 2. Crest hover micro-interaction */}
-          <motion.img
-            src={crest}
-            alt="School Crest"
-            className="crest-img"
-            whileHover={{ scale: 1.1, rotate: 5 }}
+        {/* Left: White Rounded Crest Badge + School Title */}
+        <a
+          href="#home"
+          className="logo-area"
+          onClick={() => handleLinkClick('#home')}
+        >
+          <motion.div
+            className="crest-badge"
+            whileHover={{ scale: 1.07, rotate: 3 }}
             transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-          />
+          >
+            <img src={crest} alt="Taxila Crest" className="crest-img" />
+          </motion.div>
           <div className="school-title">
-            <h1>තක්ෂිලා මහා විද්‍යාලය-හොරණ</h1>
-            <span>Taxila Maha Vidyalaya - Horana</span>
+            <h1>තක්ෂිලා මහා විද්‍යාලය - හොරණ</h1>
+            <span>TAXILA MAHA VIDYALAYA - HORANA</span>
           </div>
-        </div>
+        </a>
 
-        <nav>
-          <ul className="nav-links">
-            {/* 3. Nav item subtle hover bounce */}
-            {navLinks.map((item, index) => (
-              <motion.li
-                key={index}
-                whileHover={{ y: -2 }}
-                transition={{ duration: 0.2 }}
-              >
-                <a href={item.href}>{item.title}</a>
-              </motion.li>
-            ))}
+        {/* Right: Floating Pill Navigation Container (Desktop) */}
+        <nav className="desktop-nav">
+          <div className="nav-pill-wrapper">
+            <ul className="nav-links">
+              {navLinks.map((item) => {
+                const isActive = activeHref === item.href;
+                return (
+                  <li key={item.href}>
+                    <a
+                      href={item.href}
+                      className={`nav-pill-link ${isActive ? 'active' : ''}`}
+                      onClick={() => handleLinkClick(item.href)}
+                    >
+                      {item.title}
+                      {isActive && (
+                        <motion.span
+                          layoutId="navIndicator"
+                          className="active-indicator"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
 
-            {/* 4. Student Portal Button (Spring click & hover scale) */}
-            <li>
+            <div className="nav-divider" />
+
+            {/* Portal Action Buttons inside the Pill */}
+            <div className="portal-actions">
               <motion.button
-                className="portal-btn"
+                className="pill-btn student-btn"
                 onClick={onOpenPortal}
-                whileHover={{ scale: 1.05, boxShadow: '0 8px 18px rgba(37, 99, 235, 0.35)' }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
               >
-                Student Portal
+                🎓 Student Portal
               </motion.button>
-            </li>
 
-            {/* 5. Teacher Portal Button (Spring click & hover scale) */}
-            <li>
               <motion.button
-                className="portal-btn"
+                className="pill-btn teacher-btn"
                 onClick={onOpenTeacherPortal}
-                style={{ background: '#059669', color: '#fff' }}
-                whileHover={{ scale: 1.05, boxShadow: '0 8px 18px rgba(5, 150, 105, 0.35)' }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
               >
-                Teacher Portal
+                👨‍🏫 Teacher Portal
               </motion.button>
-            </li>
-          </ul>
+            </div>
+          </div>
         </nav>
+
+        {/* Mobile Hamburger Button */}
+        <button
+          className="mobile-menu-toggle"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle Menu"
+        >
+          {mobileMenuOpen ? '✕' : '☰'}
+        </button>
       </div>
+
+      {/* Mobile Dropdown Drawer */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            className="mobile-drawer"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ul className="mobile-nav-links">
+              {navLinks.map((item) => (
+                <li key={item.href}>
+                  <a
+                    href={item.href}
+                    className={activeHref === item.href ? 'active' : ''}
+                    onClick={() => handleLinkClick(item.href)}
+                  >
+                    {item.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <div className="mobile-portal-buttons">
+              <button
+                className="pill-btn student-btn"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenPortal();
+                }}
+              >
+                🎓 Student Portal
+              </button>
+              <button
+                className="pill-btn teacher-btn"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenTeacherPortal();
+                }}
+              >
+                👨‍🏫 Teacher Portal
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.header>
   );
 }
