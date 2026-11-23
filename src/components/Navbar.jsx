@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import crest from '../assets/logo.jpg';
 import './Nav.css';
 
-export default function Navbar({ onOpenPortal, onOpenTeacherPortal }) {
+export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, onToggleDarkMode }) {
   const [activeHref, setActiveHref] = useState('#home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -17,7 +17,7 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal }) {
     { title: 'සම්බන්ධ වීමට', href: '#contact' },
   ];
 
-  // Scroll weddi active section eka auto-detect kirima (Page bottom ekata giyama #contact active wenawa)
+  // Scroll weddi active section eka auto-detect kirima
   useEffect(() => {
     const handleScroll = () => {
       const isAtBottom =
@@ -78,66 +78,80 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal }) {
           </div>
         </a>
 
-        {/* Right: Floating Pill Navigation Container (Desktop) */}
-        <nav className="desktop-nav">
-          <div className="nav-pill-wrapper">
-            <ul className="nav-links">
-              {navLinks.map((item) => {
-                const isActive = activeHref === item.href;
-                return (
-                  <li key={item.href}>
-                    <a
-                      href={item.href}
-                      className={`nav-pill-link ${isActive ? 'active' : ''}`}
-                      onClick={() => handleLinkClick(item.href)}
-                    >
-                      {item.title}
-                      {isActive && (
-                        <motion.span
-                          layoutId="navIndicator"
-                          className="active-indicator"
-                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                        />
-                      )}
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
+        {/* Right: Floating Pill Container + Dark Mode Circle Button (Desktop) */}
+        <div className="nav-right-group">
+          <nav className="desktop-nav">
+            <div className="nav-pill-wrapper">
+              <ul className="nav-links">
+                {navLinks.map((item) => {
+                  const isActive = activeHref === item.href;
+                  return (
+                    <li key={item.href}>
+                      <a
+                        href={item.href}
+                        className={`nav-pill-link ${isActive ? 'active' : ''}`}
+                        onClick={() => handleLinkClick(item.href)}
+                      >
+                        {item.title}
+                        {isActive && (
+                          <motion.span
+                            layoutId="navIndicator"
+                            className="active-indicator"
+                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
 
-            <div className="nav-divider" />
+              <div className="nav-divider" />
 
-            {/* Portal Action Buttons inside the Pill */}
-            <div className="portal-actions">
-              <motion.button
-                className="pill-btn student-btn"
-                onClick={onOpenPortal}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-              >
-                🎓 Student Portal
-              </motion.button>
+              {/* Portal Action Buttons inside the Pill */}
+              <div className="portal-actions">
+                <motion.button
+                  className="pill-btn student-btn"
+                  onClick={onOpenPortal}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  🎓 Student Portal
+                </motion.button>
 
-              <motion.button
-                className="pill-btn teacher-btn"
-                onClick={onOpenTeacherPortal}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-              >
-                👨‍🏫 Teacher Portal
-              </motion.button>
+                <motion.button
+                  className="pill-btn teacher-btn"
+                  onClick={onOpenTeacherPortal}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  👨‍🏫 Teacher Portal
+                </motion.button>
+              </div>
             </div>
-          </div>
-        </nav>
+          </nav>
 
-        {/* Mobile Hamburger Button */}
-        <button
-          className="mobile-menu-toggle"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle Menu"
-        >
-          {mobileMenuOpen ? '✕' : '☰'}
-        </button>
+          {/* Dark / Light Mode Circle Toggle Button */}
+          <motion.button
+            className="theme-toggle-btn"
+            onClick={onToggleDarkMode}
+            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle Dark Mode"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </motion.button>
+
+          {/* Mobile Hamburger Button */}
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Menu"
+          >
+            {mobileMenuOpen ? '✕' : '☰'}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Dropdown Drawer */}

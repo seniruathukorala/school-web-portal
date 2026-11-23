@@ -12,6 +12,19 @@ export default function App() {
   // 1. Navigation state: 'home', 'portal', or 'teacher'
   const [currentView, setCurrentView] = useState('home');
 
+  // Dark Mode state (saved in localStorage)
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('taxila_dark_mode') === 'true';
+  });
+
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      const next = !prev;
+      localStorage.setItem('taxila_dark_mode', String(next));
+      return next;
+    });
+  };
+
   const [notices, setNotices] = useState([]);
   useEffect(() => {
     client.fetch('*[_type == "notice"] | order(publishedAt desc)')
@@ -71,7 +84,7 @@ export default function App() {
   // 2. Student Portal view
   if (currentView === 'portal') {
     return (
-      <div style={{ minHeight: '100vh', background: '#fdf8f6', padding: '30px 20px' }}>
+      <div style={{ minHeight: '100vh', background: darkMode ? '#120608' : '#fdf8f6', padding: '30px 20px' }}>
         <div style={{ maxWidth: '650px', margin: '0 auto 15px auto' }}>
           <button
             onClick={() => setCurrentView('home')}
@@ -97,7 +110,7 @@ export default function App() {
   // 3. Teacher Upload Portal view
   if (currentView === 'teacher') {
     return (
-      <div style={{ minHeight: '100vh', background: '#fdf8f6', padding: '30px 20px' }}>
+      <div style={{ minHeight: '100vh', background: darkMode ? '#120608' : '#fdf8f6', padding: '30px 20px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto 15px auto' }}>
           <button
             onClick={() => setCurrentView('home')}
@@ -122,10 +135,12 @@ export default function App() {
 
   // 4. Normal School Homepage
   return (
-    <div>
+    <div className={`app-wrapper ${darkMode ? 'dark-mode' : ''}`}>
       <Navbar 
         onOpenPortal={() => setCurrentView('portal')} 
-        onOpenTeacherPortal={() => setCurrentView('teacher')} 
+        onOpenTeacherPortal={() => setCurrentView('teacher')}
+        darkMode={darkMode}
+        onToggleDarkMode={toggleDarkMode}
       />
 
       {/* Hero Section */}
@@ -413,7 +428,7 @@ export default function App() {
               left: 0,
               width: '100vw',
               height: '100vh',
-              backgroundColor: 'rgba(28, 4, 7, 0.9)',
+              backgroundColor: 'rgba(18, 6, 8, 0.92)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
