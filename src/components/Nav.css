@@ -25,7 +25,6 @@
   gap: 10px;
 }
 
-/* Left Brand Area */
 .logo-area {
   display: flex;
   align-items: center;
@@ -75,14 +74,12 @@
   white-space: nowrap;
 }
 
-/* Right Group */
 .nav-right-group {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* Floating Pill Wrapper (Light Mode) */
 .nav-pill-wrapper {
   display: flex;
   align-items: center;
@@ -132,7 +129,6 @@
   box-shadow: 0 3px 10px rgba(127, 29, 29, 0.25);
 }
 
-/* Bottom Gold Indicator Line on Active Tab */
 .active-indicator {
   position: absolute;
   bottom: 4px;
@@ -143,7 +139,6 @@
   border-radius: 99px;
 }
 
-/* Vertical Divider inside Pill */
 .nav-divider {
   width: 1px;
   height: 22px;
@@ -151,7 +146,6 @@
   margin: 0 3px;
 }
 
-/* Portal CTA Pill Buttons */
 .portal-actions {
   display: flex;
   align-items: center;
@@ -192,7 +186,6 @@
   background: linear-gradient(135deg, #b91c1c, #991b1b);
 }
 
-/* Theme Circle Toggle Button (Light Mode) */
 .theme-toggle-btn {
   width: 40px;
   height: 40px;
@@ -349,7 +342,6 @@
   padding: 11px;
 }
 
-/* Responsive Breakpoints */
 @media (max-width: 1320px) {
   .desktop-nav {
     display: none;

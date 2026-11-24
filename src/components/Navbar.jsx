@@ -17,7 +17,6 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
     { title: 'සම්බන්ධ වීමට', href: '#contact' },
   ];
 
-  // Scroll weddi active section eka auto-detect kirima
   useEffect(() => {
     const handleScroll = () => {
       const isAtBottom =
@@ -46,30 +45,11 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Desktop & Mobile dekema 100% wada karana scroll handler eka
-  const handleLinkClick = (e, href) => {
-    e.preventDefault();
+  const handleLinkClick = (href) => {
     setActiveHref(href);
-    setMobileMenuOpen(false);
-
-    // Drawer eka close wela DOM layout eka settle unama scroll karanawa
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        if (href === '#home') {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          document.documentElement.scrollTop = 0;
-          document.body.scrollTop = 0;
-          return;
-        }
-
-        const target = document.querySelector(href);
-        if (target) {
-          const navbarHeight = 78;
-          const y = target.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
-          window.scrollTo({ top: y, behavior: 'smooth' });
-        }
-      }, 60);
-    });
+    setTimeout(() => {
+      setMobileMenuOpen(false);
+    }, 100);
   };
 
   return (
@@ -80,11 +60,10 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
       <div className="nav-container">
-        {/* Left: White Rounded Crest Badge + School Title */}
         <a
           href="#home"
           className="logo-area"
-          onClick={(e) => handleLinkClick(e, '#home')}
+          onClick={() => handleLinkClick('#home')}
         >
           <motion.div
             className="crest-badge"
@@ -99,7 +78,6 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
           </div>
         </a>
 
-        {/* Right: Floating Pill Container + Dark Mode Circle Button (Desktop) */}
         <div className="nav-right-group">
           <nav className="desktop-nav">
             <div className="nav-pill-wrapper">
@@ -111,7 +89,7 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
                       <a
                         href={item.href}
                         className={`nav-pill-link ${isActive ? 'active' : ''}`}
-                        onClick={(e) => handleLinkClick(e, item.href)}
+                        onClick={() => handleLinkClick(item.href)}
                       >
                         {item.title}
                         {isActive && (
@@ -129,7 +107,6 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
 
               <div className="nav-divider" />
 
-              {/* Portal Action Buttons inside the Pill */}
               <div className="portal-actions">
                 <motion.button
                   className="pill-btn student-btn"
@@ -152,7 +129,6 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
             </div>
           </nav>
 
-          {/* Dark / Light Mode Circle Toggle Button */}
           <motion.button
             className="theme-toggle-btn"
             onClick={onToggleDarkMode}
@@ -164,7 +140,6 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
             {darkMode ? '☀️' : '🌙'}
           </motion.button>
 
-          {/* Mobile Hamburger Button */}
           <button
             type="button"
             className="mobile-menu-toggle"
@@ -176,7 +151,6 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
         </div>
       </div>
 
-      {/* Mobile Dropdown Drawer */}
       {mobileMenuOpen && (
         <div className="mobile-drawer">
           <ul className="mobile-nav-links">
@@ -185,7 +159,7 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
                 <a
                   href={item.href}
                   className={activeHref === item.href ? 'active' : ''}
-                  onClick={(e) => handleLinkClick(e, item.href)}
+                  onClick={() => handleLinkClick(item.href)}
                 >
                   {item.title}
                 </a>

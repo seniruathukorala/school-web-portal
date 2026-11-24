@@ -17,7 +17,7 @@
     --card-shadow: 0 10px 25px -5px rgba(69, 10, 17, 0.06);
 }
 
-/* --- Dark Mode Theme Variables (Deep Maroon-Charcoal + Gold) --- */
+/* --- Dark Mode Theme Variables --- */
 .dark-mode {
     --bg-main: #120608;
     --bg-alt: #19090c;
@@ -92,7 +92,7 @@ ul {
     background-color: var(--bg-alt);
 }
 
-/* --- Section Headings (Maroon & Gold Theme) --- */
+/* --- Section Headings --- */
 .section-title {
     text-align: center;
     font-size: 2.15rem;
@@ -129,6 +129,7 @@ ul {
     overflow: hidden;
     text-align: center;
     color: #ffffff;
+    scroll-margin-top: 80px;
 }
 
 .hero-overlay {
@@ -213,7 +214,7 @@ ul {
     box-shadow: 0 10px 26px rgba(250, 204, 21, 0.48);
 }
 
-/* --- About Section Base --- */
+/* --- About Section --- */
 .about-grid {
     display: flex;
     justify-content: center;
@@ -420,6 +421,7 @@ ul {
 .lyrics-wrapper {
     overflow: hidden;
     position: relative;
+    transition: max-height 0.4s ease;
 }
 
 .lyrics-wrapper.collapsed {
@@ -520,41 +522,6 @@ ul {
     margin-bottom: 16px;
 }
 
-.event-gallery-box {
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px dashed var(--card-border);
-}
-
-.event-gallery-label {
-    font-size: 0.85rem;
-    color: var(--accent-maroon);
-    font-weight: 700;
-    display: block;
-    margin-bottom: 10px;
-}
-
-.event-gallery-thumbs {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.event-thumb {
-    width: 90px;
-    height: 68px;
-    object-fit: cover;
-    border-radius: 8px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.event-thumb:hover {
-    border-color: #eab308;
-    transform: scale(1.06);
-}
-
 /* --- Notices Grid --- */
 .notices-grid {
     display: grid;
@@ -602,7 +569,7 @@ ul {
     line-height: 1.65;
 }
 
-/* --- Footer (Matching Maroon & Gold Theme) --- */
+/* --- Footer --- */
 footer {
     background: linear-gradient(180deg, #3a080e 0%, #1d0306 100%);
     color: #e2e8f0;
@@ -728,19 +695,5 @@ footer {
 
     .vision-mission, .events-grid {
         grid-template-columns: 1fr;
-    }
-}
-
-/* --- Print Styles --- */
-@media print {
-    nav, header, footer, .no-print, button, form, input, select {
-        display: none !important;
-    }
-
-    body {
-        background: #ffffff !important;
-        color: #000000 !important;
-        margin: 0 !important;
-        padding: 0 !important;
     }
 }
