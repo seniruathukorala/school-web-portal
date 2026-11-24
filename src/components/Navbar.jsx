@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import crest from '../assets/logo.jpg';
 import './Nav.css';
 
@@ -46,9 +46,21 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLinkClick = (href) => {
+  // Desktop & Mobile dekema tap karapu gaman scroll wena function eka
+  const handleLinkClick = (e, href) => {
+    e.preventDefault();
     setActiveHref(href);
     setMobileMenuOpen(false);
+
+    if (href === '#home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const target = document.querySelector(href);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   return (
@@ -63,7 +75,7 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
         <a
           href="#home"
           className="logo-area"
-          onClick={() => handleLinkClick('#home')}
+          onClick={(e) => handleLinkClick(e, '#home')}
         >
           <motion.div
             className="crest-badge"
@@ -90,7 +102,7 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
                       <a
                         href={item.href}
                         className={`nav-pill-link ${isActive ? 'active' : ''}`}
-                        onClick={() => handleLinkClick(item.href)}
+                        onClick={(e) => handleLinkClick(e, item.href)}
                       >
                         {item.title}
                         {isActive && (
@@ -145,8 +157,9 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
 
           {/* Mobile Hamburger Button */}
           <button
+            type="button"
             className="mobile-menu-toggle"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle Menu"
           >
             {mobileMenuOpen ? '✕' : '☰'}
@@ -155,51 +168,45 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
       </div>
 
       {/* Mobile Dropdown Drawer */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            className="mobile-drawer"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ul className="mobile-nav-links">
-              {navLinks.map((item) => (
-                <li key={item.href}>
-                  <a
-                    href={item.href}
-                    className={activeHref === item.href ? 'active' : ''}
-                    onClick={() => handleLinkClick(item.href)}
-                  >
-                    {item.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-            <div className="mobile-portal-buttons">
-              <button
-                className="pill-btn student-btn"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenPortal();
-                }}
-              >
-                🎓 Student Portal
-              </button>
-              <button
-                className="pill-btn teacher-btn"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenTeacherPortal();
-                }}
-              >
-                👨‍🏫 Teacher Portal
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {mobileMenuOpen && (
+        <div className="mobile-drawer">
+          <ul className="mobile-nav-links">
+            {navLinks.map((item) => (
+              <li key={item.href}>
+                <a
+                  href={item.href}
+                  className={activeHref === item.href ? 'active' : ''}
+                  onClick={(e) => handleLinkClick(e, item.href)}
+                >
+                  {item.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <div className="mobile-portal-buttons">
+            <button
+              type="button"
+              className="pill-btn student-btn"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenPortal();
+              }}
+            >
+              🎓 Student Portal
+            </button>
+            <button
+              type="button"
+              className="pill-btn teacher-btn"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenTeacherPortal();
+              }}
+            >
+              👨‍🏫 Teacher Portal
+            </button>
+          </div>
+        </div>
+      )}
     </motion.header>
   );
 }
