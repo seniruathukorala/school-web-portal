@@ -46,21 +46,30 @@ export default function Navbar({ onOpenPortal, onOpenTeacherPortal, darkMode, on
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Desktop & Mobile dekema tap karapu gaman scroll wena function eka
+  // Desktop & Mobile dekema 100% wada karana scroll handler eka
   const handleLinkClick = (e, href) => {
     e.preventDefault();
     setActiveHref(href);
     setMobileMenuOpen(false);
 
-    if (href === '#home') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+    // Drawer eka close wela DOM layout eka settle unama scroll karanawa
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (href === '#home') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+          return;
+        }
 
-    const target = document.querySelector(href);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+        const target = document.querySelector(href);
+        if (target) {
+          const navbarHeight = 78;
+          const y = target.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 60);
+    });
   };
 
   return (
